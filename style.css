@@ -234,3 +234,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .gruppe-innen .liste { margin: 0; }
 .gruppe .eintrag { background: var(--bg); }
 .pop-gruppe { margin: 6px 0 0; font-size: 16px; color: var(--gruen-tief); }
+/* names on the important places of the map (constant size on screen, see kZeigen) */
+.karte-schild { position: absolute; transform: translate(-50%, -50%) scale(var(--ks, 1)); transform-origin: 50% 50%; pointer-events: none; white-space: nowrap;
+  font-family: var(--display); font-weight: 600; font-size: 13px; line-height: 1; color: #23301f; background: rgba(255, 252, 240, .92);
+  padding: 4px 8px; border-radius: 999px; box-shadow: 0 1px 4px rgba(0, 0, 0, .3); }
+.karte-schild.klein { display: none; font-size: 11px; }
+.karte.nah .karte-schild.klein { display: block; }
+@media (max-width: 640px) { .karte-schild { font-size: 10px; padding: 3px 6px; } .karte-schild.klein { font-size: 9px; } }

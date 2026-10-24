@@ -3,6 +3,9 @@
   "use strict";
   var D = null, byName = {}, nameRe = null, filter = "alle", shown = 120, tag = null, komplett = false;
   var $ = function (id) { return document.getElementById(id); };
+  var SCHILDER = { dorfplatz: "Marktplatz", kirche: "Kirche", theater: "Theater", lager: "Lager", lagerfeuer: "Lagerfeuer", schule: "Schule",
+    krankenhaus: "Krankenhaus", muehle: "Wassermühle", militaer: "Militärbasis", schwimmbad: "Heiße Quellen", acker: "Acker",
+    gemuesegarten: "Gemüsegarten", restaurant: "Restaurant", leberkaese: "Leberkäse", doenerladen: "Döner" };
   var TABS = ["story", "dorf", "bewohner", "lager", "karte", "unterstuetzen"];
   var WERTE = [["saettigung", "Satt"], ["durst", "Getrunken"], ["waerme", "Warm"], ["energie", "Energie"], ["gesundheit", "Gesundheit"], ["glaube", "Glaube"]];
   var GRUPPEN = [
@@ -160,6 +163,15 @@
       if (!info) return;
       h += '<button type="button" class="karte-punkt ort" data-ort="' + esc(o.dorf) + '" style="' + pos(o.x, o.z) + "width:" + (o.r * 2 / spanX * 100) + "%;height:" + (o.r * 2 / spanZ * 100) + '%" aria-label="' + esc(info.name) + '"></button>';
     });
+    // names on the important places (Thomas 24.10.2026); the small shops only when zoomed in
+    var schon = {};
+    function schild(id, x, z, klein) {
+      var t = SCHILDER[id]; if (!t || schon[id + (klein ? x : "")]) return;
+      schon[id + (klein ? x : "")] = 1;
+      h += '<span class="karte-schild' + (klein ? " klein" : "") + '" style="' + pos(x, z) + '">' + esc(t) + "</span>";
+    }
+    (M.orte || []).forEach(function (o) { schild(o.dorf, o.x, o.z + (o.r || 0) * 0.55, o.dorf === "lagerfeuer" || o.dorf === "muehle"); });
+    M.haeuser.forEach(function (o) { if (o.dorf) schild(o.dorf, o.x, o.z + 6, o.dorf !== "kirche"); });
     $("karte-innen").innerHTML = h;
     K.w = M.breite; K.h = M.hoehe;
     $("karte-innen").style.width = K.w + "px"; $("karte-innen").style.height = K.h + "px";
@@ -177,7 +189,11 @@
     K.x = bw <= box.width ? (box.width - bw) / 2 : Math.min(0, Math.max(box.width - bw, K.x));
     K.y = bh <= box.height ? (box.height - bh) / 2 : Math.min(0, Math.max(box.height - bh, K.y));
   }
-  function kZeigen() { kBegrenzen(); $("karte-innen").style.transform = "translate(" + K.x + "px," + K.y + "px) scale(" + K.s + ")"; }
+  function kZeigen() {
+    kBegrenzen(); $("karte-innen").style.transform = "translate(" + K.x + "px," + K.y + "px) scale(" + K.s + ")";
+    $("karte-innen").style.setProperty("--ks", 1 / K.s);                  // the names keep their size on screen
+    $("karte").classList.toggle("nah", K.s >= K.min * 2.2);              // the small shops get their names when zoomed in
+  }
   function kZoom(f, cx, cy) {
     var box = $("karte").getBoundingClientRect();
     if (cx == null) { cx = box.width / 2; cy = box.height / 2; }
