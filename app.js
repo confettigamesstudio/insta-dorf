@@ -3,7 +3,7 @@
   "use strict";
   var D = null, byName = {}, nameRe = null, filter = "alle", shown = 120, tag = null, komplett = false;
   var $ = function (id) { return document.getElementById(id); };
-  var TABS = ["story", "karte", "bewohner", "dorf", "lager"];
+  var TABS = ["story", "karte", "bewohner", "dorf", "lager", "unterstuetzen"];
   var WERTE = [["saettigung", "Satt"], ["durst", "Getrunken"], ["waerme", "Warm"], ["energie", "Energie"], ["gesundheit", "Gesundheit"], ["glaube", "Glaube"]];
   var GRUPPEN = [
     ["Essen", ["Brot", "Fisch", "Fleisch", "Beeren", "Pilze", "Gemüse", "Milch", "Käse", "Eier", "Honig", "Obst", "Suppe", "Leberkäse"]],
@@ -46,7 +46,7 @@
   }
 
   function kopf() {
-    $("kicker").textContent = "Tag " + D.tag;
+    $("kicker").textContent = "Das Instagram-Dorf";
     $("z-einwohner").textContent = D.einwohner;
     $("z-berufe").textContent = D.berufe;
     $("z-warte").textContent = D.warteliste;
@@ -183,7 +183,12 @@
   function kOrt(id) {
     var info = (D.dorf || []).filter(function (d) { return d.id === id; })[0];
     if (!info) return;
-    kInfo("<h3>" + esc(info.name) + '</h3><img src="' + esc(info.bild) + '" alt="" style="width:100%;border-radius:12px;aspect-ratio:16/10;object-fit:cover"><p>' + verlinken(info.text) + "</p>");
+    var ort = (D.karte.orte || []).filter(function (o) { return o.dorf === id; })[0] || {};
+    var leute = (ort.wer || []).map(function (n) { return byName[n]; }).filter(Boolean);
+    kInfo("<h3>" + esc(info.name) + '</h3><img src="' + esc(info.bild) + '" alt="" style="width:100%;border-radius:12px;aspect-ratio:16/10;object-fit:cover"><p>' + verlinken(info.text) + "</p>"
+      + (leute.length ? '<p class="hinweis-klein">Hier arbeiten ' + leute.length + ":</p>" + '<div class="karte-leute">' + leute.map(function (b) {
+          return '<button type="button" class="eintrag" data-name="' + esc(b.name) + '"><span class="avatar" style="' + figur(b, 80, 16, 2) + '"></span><span class="txt"><span class="n">' + esc(b.name) + '</span><span class="b">' + esc(b.beruf) + "</span></span></button>";
+        }).join("") + "</div>" : ""));
     zaehlen("Karte Ort", { ort: info.name });
   }
   (function () {
@@ -306,7 +311,12 @@
     var t = ev.target.closest("[data-name]");
     if (t) { zaehlen("Profil geöffnet", { von: t.classList.contains("eintrag") ? "Liste" : t.classList.contains("freund") ? "Freunde" : "Text" }); profil(t.getAttribute("data-name")); return; }
     var tab = ev.target.closest("[data-tab]");
-    if (tab) { zaehlen("Reiter", { reiter: tab.getAttribute("data-tab") }); zeigeTab(tab.getAttribute("data-tab"), true); return; }
+    if (tab) {
+      zaehlen("Reiter", { reiter: tab.getAttribute("data-tab"), von: tab.classList.contains("knopf") ? "Leiste" : "Reiter" });
+      zeigeTab(tab.getAttribute("data-tab"), true);
+      if (tab.classList.contains("knopf")) $("panel-" + tab.getAttribute("data-tab")).scrollIntoView({ block: "start" });
+      return;
+    }
     var tg = ev.target.closest("[data-tag]");
     if (tg) { tag = +tg.getAttribute("data-tag"); zaehlen("Tag gewählt", { tag: tag }); komplett = false; story(); return; }
     if (ev.target.closest("#komplett")) { if (!komplett) zaehlen("Komplette Geschichte"); komplett = !komplett; story(); $("panel-story").scrollIntoView({ block: "start" }); return; }

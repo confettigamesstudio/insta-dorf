@@ -195,3 +195,22 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .karte-info p { margin: 0; }
 .karte-leute { display: flex; flex-wrap: wrap; gap: 8px; }
 .karte-leute .eintrag { width: auto; }
+
+.reiter-gold { color: var(--gold-text); }
+.unterstuetzen-kopf { display: grid; gap: 8px; }
+.unterstuetzen-kopf h2 { font-size: clamp(26px, 5vw, 36px); }
+.unterstuetzen-kopf p { margin: 0; max-width: 62ch; }
+.stufen { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 16px; }
+.stufe { background: var(--flaeche); border-radius: 20px; overflow: hidden; box-shadow: var(--schatten); display: grid; grid-template-rows: auto 1fr; border: 3px solid transparent; }
+.stufe img { width: 100%; height: auto; aspect-ratio: 900 / 725; object-fit: cover; display: block; }
+.stufe-txt { padding: 16px 18px 20px; display: grid; gap: 6px; align-content: start; }
+.stufe h3 { font-size: 26px; }
+.stufe .preis { margin: 0; font-family: var(--display); font-weight: 700; font-size: 20px; color: var(--gruen-tief); }
+.stufe ul { margin: 6px 0 0; padding-left: 20px; display: grid; gap: 6px; }
+.stufe-gold { border-color: var(--gold); }
+.stufe-super { border-color: var(--violett); }
+.stufe-super .etikett { color: var(--violett); }
+.patreon-gross { font-size: 20px; padding: 14px 24px; }
+.supporter-leiste { margin-block: 8px 24px; background: var(--flaeche); border: 2px solid var(--gold); border-radius: 18px; padding: 14px 18px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.supporter-leiste p { margin: 0; flex: 1 1 260px; }
+.supporter-krone { font-size: 30px; color: var(--gold); }

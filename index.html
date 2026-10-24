@@ -10,7 +10,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Das Instagram-Dorf: die Geschichte jedes Tages, alle Bewohner mit Profil und das Lager.">
 <link rel="stylesheet" href="schrift/schriften.css">
-<link rel="stylesheet" href="style.css?v=25dc62c7">
+<link rel="stylesheet" href="style.css?v=47f452ab">
 
 <header class="kopf">
   <div class="kopf-bild" aria-hidden="true"></div>
@@ -34,6 +34,7 @@
     <button type="button" role="tab" class="reiter-knopf" id="tab-bewohner" data-tab="bewohner" aria-selected="false">Dorfbewohner</button>
     <button type="button" role="tab" class="reiter-knopf" id="tab-dorf" data-tab="dorf" aria-selected="false">Dorf</button>
     <button type="button" role="tab" class="reiter-knopf" id="tab-lager" data-tab="lager" aria-selected="false">Lager</button>
+    <button type="button" role="tab" class="reiter-knopf reiter-gold" id="tab-unterstuetzen" data-tab="unterstuetzen" aria-selected="false">♛ Unterstützen</button>
   </div>
 </nav>
 
@@ -80,7 +81,40 @@
   <section id="panel-lager" class="panel" role="tabpanel" aria-labelledby="tab-lager" hidden>
     <div id="lager-inhalt"></div>
   </section>
+  <section id="panel-unterstuetzen" class="panel" role="tabpanel" aria-labelledby="tab-unterstuetzen" hidden>
+    <div class="unterstuetzen-kopf">
+      <h2>Werde Teil des Dorfes – mit Krone</h2>
+      <p>Das Insta-Dorf entsteht jeden Tag neu aus euren Kommentaren. Wer das Projekt auf Patreon unterstützt, bekommt im Dorf etwas, das jeder im Video sieht.</p>
+    </div>
+    <div class="stufen">
+      <article class="stufe">
+        <img src="bilder_patreon/krone.webp" alt="Figur mit goldener Krone" width="900" height="725" loading="lazy">
+        <div class="stufe-txt"><p class="etikett">Stufe 1</p><h3>Krone</h3><p class="preis">5 € im Monat</p>
+          <ul><li>Eine goldene, glänzende Krone über deiner Figur im Dorf</li><li>Supporter-Abzeichen auf instadorf.de</li><li>Du unterstützt jeden neuen Tag im Dorf</li></ul></div>
+      </article>
+      <article class="stufe stufe-gold">
+        <img src="bilder_patreon/gold.webp" alt="Figur mit Krone und goldener Aura" width="900" height="725" loading="lazy">
+        <div class="stufe-txt"><p class="etikett">Stufe 2</p><h3>Goldene Aura</h3><p class="preis">10 € im Monat</p>
+          <ul><li>Krone und eine lodernde goldene Aura</li><li>Du bist öfter im Video zu sehen</li><li>Goldener Rahmen auf instadorf.de</li></ul></div>
+      </article>
+      <article class="stufe stufe-super">
+        <img src="bilder_patreon/super.webp" alt="Figur mit Krone und violetter Super-Aura" width="900" height="725" loading="lazy">
+        <div class="stufe-txt"><p class="etikett">Stufe 3</p><h3>Super-Aura</h3><p class="preis">25 € im Monat</p>
+          <ul><li>Krone und die violette Super-Aura mit Blitzen und Funkenregen</li><li><strong>Du bestimmst die Story mit:</strong> deine Ideen kommen ins Dorf</li><li>Am häufigsten im Video zu sehen</li></ul></div>
+      </article>
+    </div>
+    <a class="patreon-knopf patreon-gross" href="https://www.patreon.com/ReisendeGedanken" target="_blank" rel="noopener" data-umami-event="Patreon" data-umami-event-ort="reiter">Jetzt auf Patreon unterstützen</a>
+    <p class="hinweis-klein">So klappt die Zuordnung: Schreib nach dem Beitritt deinen Instagram-Namen unter den angepinnten Beitrag auf Patreon. Krone und Aura erscheinen dann am nächsten Tag im Dorf.</p>
+  </section>
 </main>
+
+<div class="huelle">
+  <aside class="supporter-leiste">
+    <span class="supporter-krone">♛</span>
+    <p><strong>Krone, goldene Aura oder Super-Aura für deine Figur?</strong> Unterstütze das Dorf auf Patreon – mit Stufe 3 bestimmst du sogar die Story mit.</p>
+    <button type="button" class="knopf" data-tab="unterstuetzen">Mehr erfahren</button>
+  </aside>
+</div>
 
 <div class="profil-hintergrund" id="profil-hg" hidden></div>
 <aside class="profil" id="profil" hidden aria-modal="true" role="dialog" aria-labelledby="p-name">
@@ -95,7 +129,7 @@
 </footer>
 
 <script defer src="https://cloud.umami.is/script.js" data-website-id="80cb14ef-1eda-40cc-8519-9f694c1fff23" data-domains="instadorf.de"></script>
-<script src="app.js?v=dbd0b4b6"></script>
+<script src="app.js?v=f968488c"></script>
 
 </body>
 </html>
