@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Insta-Dorf</title>
+</head>
+<body>
+
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Das Instagram-Dorf: die Geschichte jedes Tages, alle Bewohner mit Profil und das Lager.">
+<link rel="stylesheet" href="schrift/schriften.css">
+<link rel="stylesheet" href="style.css">
+
+<header class="kopf">
+  <div class="kopf-bild" aria-hidden="true"></div>
+  <div class="huelle kopf-innen">
+    <p class="kicker" id="kicker">Das Instagram-Dorf</p>
+    <h1>Insta-Dorf</h1>
+    <p class="unter">Jeder Kommentar mit einem Beruf zieht ein. Hier steht, was im Dorf passiert, wer dort wohnt und was im Lager liegt.</p>
+    <a class="patreon-knopf" href="https://www.patreon.com/ReisendeGedanken" target="_blank" rel="noopener">Unterstütze das Dorf auf Patreon</a>
+    <dl class="zahlen">
+      <div><dt>Einwohner</dt><dd id="z-einwohner">…</dd></div>
+      <div><dt>Berufe</dt><dd id="z-berufe">…</dd></div>
+      <div><dt>Ziehen bald ein</dt><dd id="z-warte">…</dd></div>
+    </dl>
+  </div>
+</header>
+
+<nav class="reiter-leiste" aria-label="Bereiche">
+  <div class="huelle reiter" role="tablist">
+    <button type="button" role="tab" class="reiter-knopf" id="tab-story" data-tab="story" aria-selected="true">Die Story</button>
+    <button type="button" role="tab" class="reiter-knopf" id="tab-bewohner" data-tab="bewohner" aria-selected="false">Dorfbewohner</button>
+    <button type="button" role="tab" class="reiter-knopf" id="tab-dorf" data-tab="dorf" aria-selected="false">Dorf</button>
+    <button type="button" role="tab" class="reiter-knopf" id="tab-lager" data-tab="lager" aria-selected="false">Lager</button>
+  </div>
+</nav>
+
+<main class="huelle">
+  <section id="panel-story" class="panel" role="tabpanel" aria-labelledby="tab-story">
+    <div class="tage" id="tage" role="group" aria-label="Tag auswählen"></div>
+    <div id="story-inhalt"></div>
+    <button type="button" class="knopf" id="komplett">Komplette Geschichte lesen</button>
+  </section>
+
+  <section id="panel-bewohner" class="panel" role="tabpanel" aria-labelledby="tab-bewohner" hidden>
+    <div class="suchleiste">
+      <label for="suche" class="sr">Namen oder Beruf suchen</label>
+      <input id="suche" type="search" placeholder="Deinen Insta-Namen oder einen Beruf suchen" autocomplete="off" spellcheck="false">
+      <div class="filter" role="group" aria-label="Filter">
+        <button type="button" class="chip aktiv" data-filter="alle" id="f-alle">Alle</button>
+        <button type="button" class="chip" data-filter="neu" id="f-neu">Neu am letzten Tag</button>
+        <button type="button" class="chip" data-filter="warte" id="f-warte">Zieht bald ein</button>
+        <button type="button" class="chip" data-filter="supporter" id="f-supporter">Supporter</button>
+      </div>
+    </div>
+    <p class="treffer" id="treffer" aria-live="polite"></p>
+    <ul class="liste" id="liste"></ul>
+  </section>
+
+  <section id="panel-dorf" class="panel" role="tabpanel" aria-labelledby="tab-dorf" hidden>
+    <p class="dorf-intro">Was im Dorf steht und was dort passiert. Mit jedem Tag kommt etwas dazu.</p>
+    <div id="dorf-inhalt" class="gebaeude"></div>
+  </section>
+
+  <section id="panel-lager" class="panel" role="tabpanel" aria-labelledby="tab-lager" hidden>
+    <div id="lager-inhalt"></div>
+  </section>
+</main>
+
+<div class="profil-hintergrund" id="profil-hg" hidden></div>
+<aside class="profil" id="profil" hidden aria-modal="true" role="dialog" aria-labelledby="p-name">
+  <button type="button" class="zu" id="profil-zu" aria-label="Profil schließen">×</button>
+  <div id="profil-inhalt"></div>
+</aside>
+
+<footer class="fuss huelle">
+  <p>Jeden Tag ein neues Video auf Instagram. Schreib deinen Beruf in die Kommentare und zieh ein.</p>
+  <p>Supporter auf <a href="https://www.patreon.com/ReisendeGedanken" target="_blank" rel="noopener">Patreon</a> bekommen im Dorf eine Krone, ab Stufe 2 auch eine Aura.</p>
+  <p class="fuss-links"><a href="impressum.html">Impressum</a><a href="datenschutz.html">Datenschutz</a></p>
+</footer>
+
+<script src="app.js"></script>
+
+</body>
+</html>
