@@ -12,6 +12,10 @@
     ["Rohstoffe", ["Holz", "Stein", "Erz", "Eisen", "Wolle", "Fell", "Leder", "Hanffaser", "Gummi", "Lehm", "Ton"]],
   ];
 
+  // click statistics (Umami, cookieless; only on instadorf.de, where the script is loaded)
+  var suchTimer = null;
+  function zaehlen(name, daten) { try { if (window.umami && window.umami.track) window.umami.track(name, daten || {}); } catch (e) { /* never break the page */ } }
+
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function link(n) { return '<button type="button" class="name-link" data-name="' + esc(n) + '">' + esc(n) + "</button>"; }
   function verlinken(text) {
@@ -200,16 +204,16 @@
 
   document.addEventListener("click", function (ev) {
     var t = ev.target.closest("[data-name]");
-    if (t) { profil(t.getAttribute("data-name")); return; }
+    if (t) { zaehlen("Profil geöffnet", { von: t.classList.contains("eintrag") ? "Liste" : t.classList.contains("freund") ? "Freunde" : "Text" }); profil(t.getAttribute("data-name")); return; }
     var tab = ev.target.closest("[data-tab]");
-    if (tab) { zeigeTab(tab.getAttribute("data-tab"), true); return; }
+    if (tab) { zaehlen("Reiter", { reiter: tab.getAttribute("data-tab") }); zeigeTab(tab.getAttribute("data-tab"), true); return; }
     var tg = ev.target.closest("[data-tag]");
-    if (tg) { tag = +tg.getAttribute("data-tag"); komplett = false; story(); return; }
-    if (ev.target.closest("#komplett")) { komplett = !komplett; story(); $("panel-story").scrollIntoView({ block: "start" }); return; }
-    if (ev.target.closest("#mehr")) { shown += 240; liste(); return; }
+    if (tg) { tag = +tg.getAttribute("data-tag"); zaehlen("Tag gewählt", { tag: tag }); komplett = false; story(); return; }
+    if (ev.target.closest("#komplett")) { if (!komplett) zaehlen("Komplette Geschichte"); komplett = !komplett; story(); $("panel-story").scrollIntoView({ block: "start" }); return; }
+    if (ev.target.closest("#mehr")) { zaehlen("Mehr Bewohner"); shown += 240; liste(); return; }
     var f = ev.target.closest("[data-filter]");
     if (f) {
-      filter = f.getAttribute("data-filter"); shown = 120;
+      filter = f.getAttribute("data-filter"); shown = 120; zaehlen("Filter", { filter: filter });
       document.querySelectorAll("[data-filter]").forEach(function (x) { x.classList.toggle("aktiv", x === f); });
       liste();
     }
@@ -217,7 +221,11 @@
   $("profil-zu").addEventListener("click", schliessen);
   $("profil-hg").addEventListener("click", schliessen);
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("profil").hidden) schliessen(); });
-  $("suche").addEventListener("input", function () { shown = 120; liste(); });
+  $("suche").addEventListener("input", function () {
+    shown = 120; liste();
+    clearTimeout(suchTimer);   // one event per search, not per letter
+    suchTimer = setTimeout(function () { if ($("suche").value.trim()) zaehlen("Suche", { gefunden: $("liste").children.length > 0 ? "ja" : "nein" }); }, 1200);
+  });
   window.addEventListener("hashchange", vonHash);
   laden();
 })();
