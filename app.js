@@ -41,7 +41,7 @@
         .sort(function (a, b) { return b.length - a.length; }).map(function (n) { return n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); });
       nameRe = names.length ? new RegExp("(^|[^\\w.\\u0000])(" + names.join("|") + ")(?![\\w])", "g") : null;
       tag = d.geschichte.tag;
-      kopf(); tage(); story(); liste(); dorf(); lager(); karte(); vonHash();
+      kopf(); tage(); story(); liste(); dorf(); lager(); karteBauen(); vonHash();
     }).catch(function () { $("story-inhalt").innerHTML = '<p class="hinweis">Die Dorfdaten konnten gerade nicht geladen werden. Lade die Seite bitte neu.</p>'; });
   }
 
@@ -126,7 +126,7 @@
 
   // ---------------------------------------------------------------- the map: tap a house, see who lives there
   var K = { s: 1, x: 0, y: 0, min: 1, w: 0, h: 0 }, kZeiger = {}, kStart = null, kBewegt = false;
-  function karte() {
+  function karteBauen() {
     var M = D.karte;
     if (!M) { $("tab-karte").hidden = true; return; }
     var spanX = M.x1 - M.x0, spanZ = M.z1 - M.z0;
