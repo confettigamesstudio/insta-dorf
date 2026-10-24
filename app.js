@@ -173,8 +173,25 @@
     (M.orte || []).forEach(function (o) { schild(o.dorf, o.x, o.z + (o.r || 0) * 0.55, o.dorf === "lagerfeuer" || o.dorf === "muehle"); });
     M.haeuser.forEach(function (o) { if (o.dorf) schild(o.dorf, o.x, o.z + 6, o.dorf !== "kirche"); });
     $("karte-innen").innerHTML = h;
+    $("karte-modus").hidden = !M.dreiD;
     K.w = M.breite; K.h = M.hoehe;
     $("karte-innen").style.width = K.w + "px"; $("karte-innen").style.height = K.h + "px";
+  }
+  // the 3D village (Thomas 24.10.2026): loaded on the first tap on "3D-Dorf", the map stays the default
+  var dreiD = null;
+  function modus(m) {
+    document.querySelectorAll("[data-modus]").forEach(function (b) { b.classList.toggle("aktiv", b.getAttribute("data-modus") === m); });
+    $("karte").hidden = m === "3d"; $("dorf3d").hidden = m !== "3d";
+    if (m === "2d") { requestAnimationFrame(kAnpassen); return; }
+    zaehlen("3D-Dorf");
+    if (dreiD) return;
+    dreiD = import("./lib/dorf3d.js").then(function (mod) {
+      return mod.start($("dorf3d"), D.karte, function (hit) {
+        if (hit.villager && D.karte.namen && D.karte.namen[hit.villager] && byName[D.karte.namen[hit.villager]]) profil(D.karte.namen[hit.villager]);
+        else if (hit.house) { var i = D.karte.haeuser.findIndex(function (h) { return h.id === hit.house; }); if (i >= 0) kHaus(i); }
+      }, function (t) { $("dorf3d-status").textContent = t; });
+    }).then(function (v) { $("dorf3d-status").hidden = true; return v; })
+      .catch(function () { $("dorf3d-status").textContent = "Das 3D-Dorf läuft auf diesem Gerät leider nicht. Die Karte von oben geht immer."; });
   }
   function kAnpassen() {   // whole map visible, at most as wide as the box
     var box = $("karte").getBoundingClientRect();
@@ -373,6 +390,8 @@
     if (tg) { tag = +tg.getAttribute("data-tag"); zaehlen("Tag gewählt", { tag: tag }); komplett = false; story(); return; }
     if (ev.target.closest("#komplett")) { if (!komplett) zaehlen("Komplette Geschichte"); komplett = !komplett; story(); $("panel-story").scrollIntoView({ block: "start" }); return; }
     if (ev.target.closest("#mehr")) { zaehlen("Mehr Bewohner"); shown += 240; liste(); return; }
+    var md = ev.target.closest("[data-modus]");
+    if (md) { modus(md.getAttribute("data-modus")); return; }
     var f = ev.target.closest("[data-filter]");
     if (f) {
       filter = f.getAttribute("data-filter"); shown = 120; zaehlen("Filter", { filter: filter });

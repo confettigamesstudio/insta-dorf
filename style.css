@@ -241,3 +241,9 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .karte-schild.klein { display: none; font-size: 11px; }
 .karte.nah .karte-schild.klein { display: block; }
 @media (max-width: 640px) { .karte-schild { font-size: 10px; padding: 3px 6px; } .karte-schild.klein { font-size: 9px; } }
+/* the 3D village */
+.karte-modus { margin-bottom: 10px; }
+.dorf3d { position: relative; height: min(72vh, 680px); border-radius: 18px; overflow: hidden; background: #bfe3f2; touch-action: none; }
+.dorf3d canvas { display: block; width: 100%; height: 100%; }
+.dorf3d-status { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; padding: 20px; text-align: center; color: #23301f; font-weight: 700; }
+.dorf3d-hilfe { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); margin: 0; padding: 5px 12px; border-radius: 999px; background: rgba(255, 252, 240, .9); color: #23301f; font-size: 12px; font-weight: 700; white-space: nowrap; pointer-events: none; max-width: calc(100% - 20px); overflow: hidden; text-overflow: ellipsis; }
