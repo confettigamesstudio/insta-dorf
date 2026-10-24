@@ -39,7 +39,7 @@ h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-he
 .kopf { position: relative; color: #fff; background: #2c4a26; overflow: hidden; }
 .kopf-bild { position: absolute; inset: 0; background-image: url(daten/kopf.webp); background-size: cover; background-position: center 40%; }
 .kopf-bild::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(14, 26, 12, .15) 0%, rgba(14, 26, 12, .35) 45%, rgba(14, 26, 12, .82) 100%); }
-.kopf-innen { position: relative; padding-block: clamp(120px, 22vw, 220px) 30px; display: grid; gap: 10px; text-shadow: 0 2px 12px rgba(0, 0, 0, .45); }
+.kopf-innen { position: relative; padding-block: clamp(56px, 9vw, 96px) 22px; display: grid; gap: 10px; text-shadow: 0 2px 12px rgba(0, 0, 0, .45); }
 .kicker { margin: 0; font-family: var(--display); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; font-size: 13px; opacity: .85; }
 .kopf h1 { font-size: clamp(48px, 11vw, 92px); font-weight: 700; letter-spacing: -.01em; line-height: .95; }
 .unter { margin: 0; max-width: 60ch; opacity: .92; }
@@ -52,7 +52,8 @@ main { display: grid; gap: 28px; padding-block: 24px; }
 .panel { display: grid; gap: 18px; }
 .reiter-leiste { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 6; background: var(--bg); border-bottom: 2px solid var(--linie); }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
-.reiter { display: flex; gap: 4px; overflow-x: auto; }
+.reiter { display: flex; flex-wrap: wrap; gap: 0 4px; }
+@media (max-width: 640px) { .reiter { justify-content: center; } .reiter-knopf { font-size: 16px; padding: 10px 9px 8px; } }
 .reiter-knopf { font: inherit; font-family: var(--display); font-weight: 600; font-size: 18px; color: var(--leise); background: none; border: 0; padding: 14px 14px 12px; border-bottom: 4px solid transparent; margin-bottom: -2px; cursor: pointer; white-space: nowrap; }
 .reiter-knopf[aria-selected="true"] { color: var(--text); border-bottom-color: var(--gruen); }
 .reiter-knopf:focus-visible { outline: 3px solid var(--gold); outline-offset: -3px; }
@@ -214,3 +215,21 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .supporter-leiste { margin-block: 8px 24px; background: var(--flaeche); border: 2px solid var(--gold); border-radius: 18px; padding: 14px 18px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
 .supporter-leiste p { margin: 0; flex: 1 1 260px; }
 .supporter-krone { font-size: 30px; color: var(--gold); }
+
+/* the map: what lives and works there in a small window over the map (Thomas 24.10.2026, also for phones) */
+.pop { position: fixed; z-index: 21; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(460px, calc(100% - 32px)); max-height: min(78vh, 640px); overflow-y: auto;
+  background: var(--bg); border-radius: 20px; box-shadow: var(--schatten); padding: 20px 18px 18px; display: grid; gap: 10px; }
+.pop h3 { font-size: 21px; padding-right: 44px; overflow-wrap: anywhere; }
+.pop p { margin: 0; }
+.pop .zu { position: absolute; top: 10px; right: 10px; }
+@media (prefers-reduced-motion: no-preference) { .pop:not([hidden]) { animation: auf .18s ease-out; } @keyframes auf { from { opacity: .3; transform: translate(-50%, -46%); } } }
+.gruppe { background: var(--flaeche); border-radius: 16px; margin-bottom: 10px; }
+.gruppe > summary { cursor: pointer; list-style: none; padding: 14px 18px; font-family: var(--display); font-weight: 600; font-size: 20px; display: flex; justify-content: space-between; gap: 12px; }
+.gruppe > summary::-webkit-details-marker { display: none; }
+.gruppe > summary::after { content: "+"; color: var(--leise); }
+.gruppe[open] > summary::after { content: "−"; }
+.gruppe > summary small { color: var(--leise); font-family: var(--body); font-weight: 600; font-size: 15px; margin-left: auto; }
+.gruppe-innen { padding: 0 12px 14px; display: grid; gap: 14px; }
+.gruppe-innen h4 { margin: 0 0 6px 6px; font-size: 16px; color: var(--gruen-tief); }
+.gruppe-innen .liste { margin: 0; }
+.gruppe .eintrag { background: var(--bg); }

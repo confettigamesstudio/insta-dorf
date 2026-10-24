@@ -1,9 +1,9 @@
-// Das Instagram-Dorf: tabs Story / Dorfbewohner / Lager, a profile per name. Data: daten/dorf.json (built by Webseite/bauen.py).
+// Das Instagram-Dorf: tabs Story / Dorf / Dorfbewohner / Lager / Karte / Unterstuetzen, a profile per name. Data: daten/dorf.json (built by Webseite/bauen.py).
 (function () {
   "use strict";
   var D = null, byName = {}, nameRe = null, filter = "alle", shown = 120, tag = null, komplett = false;
   var $ = function (id) { return document.getElementById(id); };
-  var TABS = ["story", "karte", "bewohner", "dorf", "lager", "unterstuetzen"];
+  var TABS = ["story", "dorf", "bewohner", "lager", "karte", "unterstuetzen"];
   var WERTE = [["saettigung", "Satt"], ["durst", "Getrunken"], ["waerme", "Warm"], ["energie", "Energie"], ["gesundheit", "Gesundheit"], ["glaube", "Glaube"]];
   var GRUPPEN = [
     ["Essen", ["Brot", "Fisch", "Fleisch", "Beeren", "Pilze", "Gemüse", "Milch", "Käse", "Eier", "Honig", "Obst", "Suppe", "Leberkäse"]],
@@ -59,6 +59,7 @@
       $("tab-" + t).setAttribute("aria-selected", t === name ? "true" : "false");
     });
     if (name === "karte" && D && D.karte) requestAnimationFrame(kAnpassen);
+    $("supporter-leiste").hidden = name === "unterstuetzen";   // the support tab already says it all
     if (push) { try { history.replaceState(null, "", "#" + name); } catch (e) { /* preview frame */ } }
   }
 
@@ -99,8 +100,6 @@
 
   // ---------------------------------------------------------------- villagers
   function passt(b, q) {
-    if (filter === "neu" && !(b.einzug === D.tag && !b.wartet)) return false;
-    if (filter === "warte" && !b.wartet) return false;
     if (filter === "supporter" && !b.patreon) return false;
     if (!q) return true;
     return b.name.toLowerCase().indexOf(q) >= 0 || (b.beruf || "").toLowerCase().indexOf(q) >= 0;
@@ -112,6 +111,7 @@
     $("treffer").textContent = treffer.length === 0
       ? (filter === "supporter" ? "Noch keine Supporter. Wer das Dorf unterstützt, bekommt eine Krone und erscheint hier." : "Niemand gefunden. Noch nicht eingezogen? Schreib deinen Beruf unter das neueste Video.")
       : treffer.length + " Bewohner";
+    if (filter === "beruf") { $("liste").innerHTML = nachBeruf(treffer, q); return; }
     var html = treffer.slice(0, shown).map(function (b) {
       var neu = b.einzug === D.tag && !b.wartet;
       var cls = "eintrag" + (neu ? " neu" : "") + (b.wartet ? " warte" : "") + supKlasse(b, "sup");
@@ -122,6 +122,25 @@
     }).join("");
     if (treffer.length > shown) html += '<li class="mehr"><button type="button" class="chip" id="mehr">Weitere ' + (treffer.length - shown) + " anzeigen</button></li>";
     $("liste").innerHTML = html;
+  }
+
+  // by profession (Thomas 24.10.2026): the groups (Gesundheit, Sicherheit ...) fold open, inside each profession with its people
+  function kurz(b) {
+    return '<li><button type="button" class="eintrag' + supKlasse(b, "sup") + '" data-name="' + esc(b.name) + '"><span class="avatar" style="' + figur(b, 80, 16, 2) + '"></span>'
+      + '<span class="txt"><span class="n">' + esc(b.name) + (b.patreon ? '<span class="marke sup' + (b.patreon >= 3 ? " sup3" : "") + '">Supporter</span>' : "") + '</span><span class="b">' + esc(b.beruf) + "</span></span></button></li>";
+  }
+  function nachBeruf(treffer, q) {
+    return (D.kategorien || ["Sonstige"]).map(function (k) {
+      var leute = treffer.filter(function (b) { return (b.kategorie || "Sonstige") === k; });
+      if (!leute.length) return "";
+      var berufe = {};
+      leute.forEach(function (b) { (berufe[b.beruf || "ohne Beruf"] = berufe[b.beruf || "ohne Beruf"] || []).push(b); });
+      var namen = Object.keys(berufe).sort(function (a, b) { return berufe[b].length - berufe[a].length || a.localeCompare(b, "de"); });
+      return '<li style="grid-column:1/-1"><details class="gruppe"' + (q ? " open" : "") + "><summary>" + esc(k) + "<small>" + leute.length + (leute.length === 1 ? " Bewohner" : " Bewohner") + "</small></summary>"
+        + '<div class="gruppe-innen">' + namen.map(function (n) {
+          return "<div><h4>" + esc(n) + " (" + berufe[n].length + ')</h4><ul class="liste">' + berufe[n].sort(function (a, b) { return a.name.localeCompare(b.name, "de"); }).map(kurz).join("") + "</ul></div>";
+        }).join("") + "</div></details></li>";
+    }).join("");
   }
 
   // ---------------------------------------------------------------- the map: tap a house, see who lives there
@@ -165,7 +184,11 @@
     var ns = Math.max(K.min, Math.min(K.s * f, K.min * 8)), k = ns / K.s;
     K.x = cx - (cx - K.x) * k; K.y = cy - (cy - K.y) * k; K.s = ns; kZeigen();
   }
-  function kInfo(html) { $("karte-info").innerHTML = html; $("karte-info").hidden = false; }
+  function kInfo(html) { $("pop-inhalt").innerHTML = html; $("pop").hidden = false; $("pop-hg").hidden = false; $("pop").scrollTop = 0; $("pop-zu").focus(); }
+  function popZu() {
+    $("pop").hidden = true; $("pop-hg").hidden = true;
+    document.querySelectorAll(".karte-punkt.aktiv").forEach(function (b) { b.classList.remove("aktiv"); });
+  }
   function kHaus(i) {
     var o = D.karte.haeuser[i];
     document.querySelectorAll(".karte-punkt.aktiv").forEach(function (b) { b.classList.remove("aktiv"); });
@@ -309,6 +332,7 @@
 
   document.addEventListener("click", function (ev) {
     var t = ev.target.closest("[data-name]");
+    if (t && !$("pop").hidden) popZu();   // a name in the map window: the profile instead
     if (t) { zaehlen("Profil geöffnet", { von: t.classList.contains("eintrag") ? "Liste" : t.classList.contains("freund") ? "Freunde" : "Text" }); profil(t.getAttribute("data-name")); return; }
     var tab = ev.target.closest("[data-tab]");
     if (tab) {
@@ -329,8 +353,10 @@
     }
   });
   $("profil-zu").addEventListener("click", schliessen);
+  $("pop-zu").addEventListener("click", popZu);
+  $("pop-hg").addEventListener("click", popZu);
   $("profil-hg").addEventListener("click", schliessen);
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("profil").hidden) schliessen(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("profil").hidden) schliessen(); else if (e.key === "Escape" && !$("pop").hidden) popZu(); });
   $("suche").addEventListener("input", function () {
     shown = 120; liste();
     clearTimeout(suchTimer);   // one event per search, not per letter
