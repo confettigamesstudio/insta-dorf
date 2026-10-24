@@ -3,7 +3,7 @@
   "use strict";
   var D = null, byName = {}, nameRe = null, filter = "alle", shown = 120, tag = null, komplett = false;
   var $ = function (id) { return document.getElementById(id); };
-  var TABS = ["story", "bewohner", "dorf", "lager"];
+  var TABS = ["story", "karte", "bewohner", "dorf", "lager"];
   var WERTE = [["saettigung", "Satt"], ["durst", "Getrunken"], ["waerme", "Warm"], ["energie", "Energie"], ["gesundheit", "Gesundheit"], ["glaube", "Glaube"]];
   var GRUPPEN = [
     ["Essen", ["Brot", "Fisch", "Fleisch", "Beeren", "Pilze", "Gemüse", "Milch", "Käse", "Eier", "Honig", "Obst", "Suppe", "Leberkäse"]],
@@ -41,7 +41,7 @@
         .sort(function (a, b) { return b.length - a.length; }).map(function (n) { return n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); });
       nameRe = names.length ? new RegExp("(^|[^\\w.\\u0000])(" + names.join("|") + ")(?![\\w])", "g") : null;
       tag = d.geschichte.tag;
-      kopf(); tage(); story(); liste(); dorf(); lager(); vonHash();
+      kopf(); tage(); story(); liste(); dorf(); lager(); karte(); vonHash();
     }).catch(function () { $("story-inhalt").innerHTML = '<p class="hinweis">Die Dorfdaten konnten gerade nicht geladen werden. Lade die Seite bitte neu.</p>'; });
   }
 
@@ -58,6 +58,7 @@
       $("panel-" + t).hidden = t !== name;
       $("tab-" + t).setAttribute("aria-selected", t === name ? "true" : "false");
     });
+    if (name === "karte" && D && D.karte) requestAnimationFrame(kAnpassen);
     if (push) { try { history.replaceState(null, "", "#" + name); } catch (e) { /* preview frame */ } }
   }
 
@@ -122,6 +123,105 @@
     if (treffer.length > shown) html += '<li class="mehr"><button type="button" class="chip" id="mehr">Weitere ' + (treffer.length - shown) + " anzeigen</button></li>";
     $("liste").innerHTML = html;
   }
+
+  // ---------------------------------------------------------------- the map: tap a house, see who lives there
+  var K = { s: 1, x: 0, y: 0, min: 1, w: 0, h: 0 }, kZeiger = {}, kStart = null, kBewegt = false;
+  function karte() {
+    var M = D.karte;
+    if (!M) { $("tab-karte").hidden = true; return; }
+    var spanX = M.x1 - M.x0, spanZ = M.z1 - M.z0;
+    function pos(x, z) { return "left:" + ((x - M.x0) / spanX * 100) + "%;top:" + ((M.z1 - z) / spanZ * 100) + "%;"; }
+    var h = '<img src="' + esc(M.bild) + '" alt="Das Dorf von oben">';
+    var hw = 8.5 / spanX * 100, hh = 8.5 / spanZ * 100;
+    M.haeuser.forEach(function (o, i) {
+      h += '<button type="button" class="karte-punkt" data-haus="' + i + '" style="' + pos(o.x, o.z) + "width:" + hw + "%;height:" + hh + '%" aria-label="Haus von ' + esc(o.wer.join(", ") || "niemandem") + '"></button>';
+    });
+    (M.orte || []).forEach(function (o) {
+      var info = (D.dorf || []).filter(function (d) { return d.id === o.dorf; })[0];
+      if (!info) return;
+      h += '<button type="button" class="karte-punkt ort" data-ort="' + esc(o.dorf) + '" style="' + pos(o.x, o.z) + "width:" + (o.r * 2 / spanX * 100) + "%;height:" + (o.r * 2 / spanZ * 100) + '%" aria-label="' + esc(info.name) + '"></button>';
+    });
+    $("karte-innen").innerHTML = h;
+    K.w = M.breite; K.h = M.hoehe;
+    $("karte-innen").style.width = K.w + "px"; $("karte-innen").style.height = K.h + "px";
+  }
+  function kAnpassen() {   // whole map visible, at most as wide as the box
+    var box = $("karte").getBoundingClientRect();
+    if (!box.width) return;
+    K.min = Math.min(box.width / K.w, box.height / K.h);
+    K.s = K.min; K.x = (box.width - K.w * K.s) / 2; K.y = (box.height - K.h * K.s) / 2; kZeigen();
+  }
+  function kBegrenzen() {
+    var box = $("karte").getBoundingClientRect();
+    K.s = Math.max(K.min, Math.min(K.s, K.min * 8));
+    var bw = K.w * K.s, bh = K.h * K.s;
+    K.x = bw <= box.width ? (box.width - bw) / 2 : Math.min(0, Math.max(box.width - bw, K.x));
+    K.y = bh <= box.height ? (box.height - bh) / 2 : Math.min(0, Math.max(box.height - bh, K.y));
+  }
+  function kZeigen() { kBegrenzen(); $("karte-innen").style.transform = "translate(" + K.x + "px," + K.y + "px) scale(" + K.s + ")"; }
+  function kZoom(f, cx, cy) {
+    var box = $("karte").getBoundingClientRect();
+    if (cx == null) { cx = box.width / 2; cy = box.height / 2; }
+    var ns = Math.max(K.min, Math.min(K.s * f, K.min * 8)), k = ns / K.s;
+    K.x = cx - (cx - K.x) * k; K.y = cy - (cy - K.y) * k; K.s = ns; kZeigen();
+  }
+  function kInfo(html) { $("karte-info").innerHTML = html; $("karte-info").hidden = false; }
+  function kHaus(i) {
+    var o = D.karte.haeuser[i];
+    document.querySelectorAll(".karte-punkt.aktiv").forEach(function (b) { b.classList.remove("aktiv"); });
+    var b = document.querySelector('[data-haus="' + i + '"]'); if (b) b.classList.add("aktiv");
+    var info = o.dorf ? (D.dorf || []).filter(function (d) { return d.id === o.dorf; })[0] : null;
+    var leute = o.wer.map(function (n) { return byName[n]; }).filter(Boolean);
+    var h = "<h3>" + (info ? esc(info.name) : leute.length ? "Haus von " + esc(leute.map(function (b) { return b.name; }).join(", ")) : "Leeres Haus") + "</h3>";
+    if (info) h += "<p>" + verlinken(info.text) + "</p>";
+    if (leute.length) h += '<p class="hinweis-klein">' + (info ? "Hier wohnt und arbeitet:" : "Hier wohnt:") + '</p><div class="karte-leute">' + leute.map(function (b) {
+      return '<button type="button" class="eintrag" data-name="' + esc(b.name) + '"><span class="avatar" style="' + figur(b, 80, 16, 2) + '"></span><span class="txt"><span class="n">' + esc(b.name) + '</span><span class="b">' + esc(b.beruf) + "</span></span></button>";
+    }).join("") + "</div>";
+    kInfo(h);
+    zaehlen("Karte Haus", { art: info ? info.name : "Wohnhaus" });
+  }
+  function kOrt(id) {
+    var info = (D.dorf || []).filter(function (d) { return d.id === id; })[0];
+    if (!info) return;
+    kInfo("<h3>" + esc(info.name) + '</h3><img src="' + esc(info.bild) + '" alt="" style="width:100%;border-radius:12px;aspect-ratio:16/10;object-fit:cover"><p>' + verlinken(info.text) + "</p>");
+    zaehlen("Karte Ort", { ort: info.name });
+  }
+  (function () {
+    var el = $("karte");
+    el.addEventListener("wheel", function (e) { e.preventDefault(); var r = el.getBoundingClientRect(); kZoom(e.deltaY < 0 ? 1.2 : 1 / 1.2, e.clientX - r.left, e.clientY - r.top); }, { passive: false });
+    el.addEventListener("pointerdown", function (e) {
+      kZeiger[e.pointerId] = { x: e.clientX, y: e.clientY };
+      kStart = { x: e.clientX, y: e.clientY, kx: K.x, ky: K.y }; kBewegt = false;
+      el.classList.add("zieht");
+    });
+    el.addEventListener("pointermove", function (e) {
+      if (!kZeiger[e.pointerId]) return;
+      var ids = Object.keys(kZeiger);
+      if (ids.length === 2) {   // pinch
+        var a = kZeiger[ids[0]], b = kZeiger[ids[1]], d0 = Math.hypot(a.x - b.x, a.y - b.y);
+        kZeiger[e.pointerId] = { x: e.clientX, y: e.clientY };
+        a = kZeiger[ids[0]]; b = kZeiger[ids[1]];
+        var d1 = Math.hypot(a.x - b.x, a.y - b.y), r = el.getBoundingClientRect();
+        if (d0 > 0) kZoom(d1 / d0, (a.x + b.x) / 2 - r.left, (a.y + b.y) / 2 - r.top);
+        kBewegt = true; return;
+      }
+      kZeiger[e.pointerId] = { x: e.clientX, y: e.clientY };
+      var dx = e.clientX - kStart.x, dy = e.clientY - kStart.y;
+      if (Math.abs(dx) + Math.abs(dy) > 6) kBewegt = true;
+      if (kBewegt) { K.x = kStart.kx + dx; K.y = kStart.ky + dy; kZeigen(); }
+    });
+    function ende(e) { delete kZeiger[e.pointerId]; if (!Object.keys(kZeiger).length) el.classList.remove("zieht"); var rest = Object.keys(kZeiger); if (rest.length === 1) { var p = kZeiger[rest[0]]; kStart = { x: p.x, y: p.y, kx: K.x, ky: K.y }; } }
+    el.addEventListener("pointerup", ende); el.addEventListener("pointercancel", ende); el.addEventListener("pointerleave", ende);
+    el.addEventListener("click", function (e) {
+      if (kBewegt) { kBewegt = false; return; }
+      var hb = e.target.closest("[data-haus]"); if (hb) { kHaus(+hb.getAttribute("data-haus")); return; }
+      var ob = e.target.closest("[data-ort]"); if (ob) kOrt(ob.getAttribute("data-ort"));
+    });
+    $("karte-plus").addEventListener("click", function (e) { e.stopPropagation(); kZoom(1.5); });
+    $("karte-minus").addEventListener("click", function (e) { e.stopPropagation(); kZoom(1 / 1.5); });
+    $("karte-reset").addEventListener("click", function (e) { e.stopPropagation(); kAnpassen(); });
+    window.addEventListener("resize", function () { if (!$("panel-karte").hidden) kAnpassen(); });
+  })();
 
   // ---------------------------------------------------------------- storehouse
   function lager() {

@@ -30,6 +30,7 @@
 <nav class="reiter-leiste" aria-label="Bereiche">
   <div class="huelle reiter" role="tablist">
     <button type="button" role="tab" class="reiter-knopf" id="tab-story" data-tab="story" aria-selected="true">Die Story</button>
+    <button type="button" role="tab" class="reiter-knopf" id="tab-karte" data-tab="karte" aria-selected="false">Karte</button>
     <button type="button" role="tab" class="reiter-knopf" id="tab-bewohner" data-tab="bewohner" aria-selected="false">Dorfbewohner</button>
     <button type="button" role="tab" class="reiter-knopf" id="tab-dorf" data-tab="dorf" aria-selected="false">Dorf</button>
     <button type="button" role="tab" class="reiter-knopf" id="tab-lager" data-tab="lager" aria-selected="false">Lager</button>
@@ -41,6 +42,19 @@
     <div class="tage" id="tage" role="group" aria-label="Tag auswählen"></div>
     <div id="story-inhalt"></div>
     <button type="button" class="knopf" id="komplett">Komplette Geschichte lesen</button>
+  </section>
+
+  <section id="panel-karte" class="panel" role="tabpanel" aria-labelledby="tab-karte" hidden>
+    <p class="dorf-intro">Tippe auf ein Haus, um zu sehen, wer darin wohnt. Ziehen zum Verschieben, Finger spreizen oder Mausrad zum Zoomen.</p>
+    <div class="karte" id="karte">
+      <div class="karte-innen" id="karte-innen"></div>
+      <div class="karte-knoepfe">
+        <button type="button" id="karte-plus" aria-label="Hineinzoomen">+</button>
+        <button type="button" id="karte-minus" aria-label="Herauszoomen">−</button>
+        <button type="button" id="karte-reset" aria-label="Ganze Karte zeigen">⤢</button>
+      </div>
+    </div>
+    <div class="karte-info" id="karte-info" hidden></div>
   </section>
 
   <section id="panel-bewohner" class="panel" role="tabpanel" aria-labelledby="tab-bewohner" hidden>
