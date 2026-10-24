@@ -203,15 +203,27 @@
     kInfo(h);
     zaehlen("Karte Haus", { art: info ? info.name : "Wohnhaus" });
   }
+  // the people of a place by profession, each with a heading (Thomas 24.10.2026: in the school teachers and pupils apart)
+  function nachGruppen(leute, zuerst) {
+    var g = {};
+    leute.forEach(function (b) { (g[b.beruf] = g[b.beruf] || []).push(b); });
+    var namen = Object.keys(g).sort(function (a, b) {
+      var ia = zuerst.indexOf(a), ib = zuerst.indexOf(b);
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b, "de");
+    });
+    return namen.map(function (n) {
+      return '<h4 class="pop-gruppe">' + esc(n) + " (" + g[n].length + ')</h4><div class="karte-leute">' + g[n].map(function (b) {
+        return '<button type="button" class="eintrag" data-name="' + esc(b.name) + '"><span class="avatar" style="' + figur(b, 80, 16, 2) + '"></span><span class="txt"><span class="n">' + esc(b.name) + '</span><span class="b">' + esc(b.beruf) + "</span></span></button>";
+      }).join("") + "</div>";
+    }).join("");
+  }
   function kOrt(id) {
     var info = (D.dorf || []).filter(function (d) { return d.id === id; })[0];
     if (!info) return;
     var ort = (D.karte.orte || []).filter(function (o) { return o.dorf === id; })[0] || {};
     var leute = (ort.wer || []).map(function (n) { return byName[n]; }).filter(Boolean);
     kInfo("<h3>" + esc(info.name) + '</h3><img src="' + esc(info.bild) + '" alt="" style="width:100%;border-radius:12px;aspect-ratio:16/10;object-fit:cover"><p>' + verlinken(info.text) + "</p>"
-      + (leute.length ? '<p class="hinweis-klein">Hier arbeiten ' + leute.length + ":</p>" + '<div class="karte-leute">' + leute.map(function (b) {
-          return '<button type="button" class="eintrag" data-name="' + esc(b.name) + '"><span class="avatar" style="' + figur(b, 80, 16, 2) + '"></span><span class="txt"><span class="n">' + esc(b.name) + '</span><span class="b">' + esc(b.beruf) + "</span></span></button>";
-        }).join("") + "</div>" : ""));
+      + (leute.length ? '<p class="hinweis-klein">' + (id === "schule" ? "In der Schule sind " : "Hier arbeiten ") + leute.length + ":</p>" + nachGruppen(leute, id === "schule" ? ["Lehrer", "Schüler"] : []) : ""));
     zaehlen("Karte Ort", { ort: info.name });
   }
   (function () {
