@@ -126,7 +126,8 @@
     var max = Math.max.apply(null, rest.map(function (w) { return w.menge; }).concat([1]));
     function kachel(w) {
       var pct = Math.max(3, Math.round(100 * Math.sqrt(w.menge / max)));
-      return '<li class="ware"><span class="wn">' + esc(w.ware) + '</span><span class="wm">' + w.menge + '</span><span class="balken"><i style="width:' + pct + '%"></i></span></li>';
+      var bild = w.icon ? '<img class="wi" src="' + esc(w.icon) + '" alt="" width="64" height="64" loading="lazy">' : '<span class="wi wi-leer">' + esc(w.ware.charAt(0)) + "</span>";
+      return '<li class="ware">' + bild + '<span class="wn">' + esc(w.ware) + '</span><span class="wm">' + w.menge + '</span><span class="balken"><i style="width:' + pct + '%"></i></span></li>';
     }
     GRUPPEN.forEach(function (g) {
       var drin = rest.filter(function (w) { return g[1].indexOf(w.ware) >= 0; });
@@ -135,7 +136,7 @@
     });
     if (rest.length) h += '<div class="lager-gruppe"><h2>Waren und Sonstiges</h2><ul class="waren">' + rest.map(kachel).join("") + "</ul></div>";
     if ((L.hergestellt || []).length) h += '<div class="lager-gruppe"><h2>An ' + tagName(L.tag) + ' hergestellt</h2><p class="hinweis-klein">'
-      + L.hergestellt.map(function (w) { return esc(w.ware) + " " + w.menge; }).join(" · ") + "</p></div>";
+      + L.hergestellt.map(function (w) { return (w.icon ? '<img class="wi-klein" src="' + esc(w.icon) + '" alt="" width="22" height="22">' : "") + esc(w.ware) + " " + w.menge; }).join(" · ") + "</p></div>";
     $("lager-inhalt").innerHTML = h || '<p class="hinweis">Das Lager ist noch leer.</p>';
   }
 

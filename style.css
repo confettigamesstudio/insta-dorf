@@ -173,3 +173,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .rechtliches p { margin: 0; overflow-wrap: anywhere; }
 .rechtliches a, .fuss-links a { color: var(--gruen-tief); font-weight: 700; }
 .fuss-links { display: flex; gap: 18px; flex-wrap: wrap; }
+.ware { grid-template-columns: 56px 1fr; grid-template-areas: "i n" "i m" "b b"; align-items: center; column-gap: 12px; }
+.ware .wi { grid-area: i; width: 56px; height: 56px; object-fit: contain; }
+.ware .wn { grid-area: n; }
+.ware .wm { grid-area: m; }
+.ware .balken { grid-area: b; }
+.wi-leer { display: grid; place-items: center; border-radius: 50%; background: var(--flaeche-2); font-family: var(--display); font-weight: 700; font-size: 24px; color: var(--leise); }
+.wi-klein { width: 22px; height: 22px; vertical-align: -5px; margin-right: 4px; object-fit: contain; }
