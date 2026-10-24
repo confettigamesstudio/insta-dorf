@@ -4,7 +4,7 @@
   var D = null, byName = {}, nameRe = null, filter = "alle", shown = 120, tag = null, komplett = false;
   var $ = function (id) { return document.getElementById(id); };
   var SCHILDER = { dorfplatz: "Marktplatz", kirche: "Kirche", theater: "Theater", lager: "Lager", lagerfeuer: "Lagerfeuer", schule: "Schule",
-    krankenhaus: "Krankenhaus", muehle: "Wassermühle", militaer: "Militärbasis", schwimmbad: "Heiße Quellen", acker: "Acker",
+    krankenhaus: "Krankenhaus", muehle: "Wassermühle", militaer: "Militärbasis", forschung: "Forschung", schwimmbad: "Heiße Quellen", acker: "Acker",
     gemuesegarten: "Gemüsegarten", restaurant: "Restaurant", leberkaese: "Leberkäse", doenerladen: "Döner" };
   var TABS = ["story", "dorf", "bewohner", "lager", "karte", "unterstuetzen"];
   var WERTE = [["saettigung", "Satt"], ["durst", "Getrunken"], ["waerme", "Warm"], ["energie", "Energie"], ["gesundheit", "Gesundheit"], ["glaube", "Glaube"]];
