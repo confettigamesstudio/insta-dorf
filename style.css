@@ -247,3 +247,32 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .dorf3d canvas { display: block; width: 100%; height: 100%; }
 .dorf3d-status { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; padding: 20px; text-align: center; color: #23301f; font-weight: 700; }
 .dorf3d-hilfe { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); margin: 0; padding: 5px 12px; border-radius: 999px; background: rgba(255, 252, 240, .9); color: #23301f; font-size: 12px; font-weight: 700; white-space: nowrap; pointer-events: none; max-width: calc(100% - 20px); overflow: hidden; text-overflow: ellipsis; }
+
+/* the day replay in the 3D village (verlauf_export.py) */
+.verlauf { position: absolute; left: 10px; right: 10px; top: 10px; display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 999px; background: rgba(255, 252, 240, .94); box-shadow: 0 2px 8px rgba(0, 0, 0, .2); }
+.verlauf button { border: 0; border-radius: 50%; width: 34px; height: 34px; background: #3f8a3a; color: #fff; font-size: 14px; cursor: pointer; flex: none; }
+.verlauf input { flex: 1; min-width: 0; accent-color: #3f8a3a; }
+.verlauf-uhr { font-weight: 800; color: #23301f; font-variant-numeric: tabular-nums; flex: none; }
+.verlauf-info { position: absolute; left: 50%; bottom: 44px; transform: translateX(-50%); max-width: calc(100% - 20px); padding: 7px 14px; border-radius: 14px; background: #fff; color: #23301f; font-weight: 700; font-size: 14px; box-shadow: 0 2px 10px rgba(0, 0, 0, .25); text-align: center; }
+/* name tags over the walking figures (like the walkable test page) */
+.verlauf-namen { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.verlauf-name { position: absolute; left: 0; top: 0; white-space: nowrap; font-weight: 700; font-size: 11px; color: #1f2a1b; background: #fff; padding: 2px 8px; border-radius: 9px; box-shadow: 0 1px 5px rgba(0, 0, 0, .22); will-change: transform; }
+.verlauf-name::after { content: ""; position: absolute; left: 50%; bottom: -4px; margin-left: -4px; border: 4px solid transparent; border-bottom: 0; border-top-color: #fff; }
+.verlauf-name.ich { box-shadow: 0 0 0 2px #e7b64a, 0 1px 5px rgba(0, 0, 0, .22); }
+/* the day's events in the replay: ticker, list, day selector */
+.verlauf select { flex: none; border: 1px solid rgba(35, 48, 31, .2); border-radius: 999px; padding: 4px 8px; font: inherit; font-weight: 700; color: #23301f; background: #fff; }
+.verlauf-ereignisse-knopf { width: auto !important; border-radius: 999px !important; padding: 0 12px; font-weight: 800; font-size: 13px !important; }
+.verlauf-ticker { position: absolute; left: 50%; top: 58px; transform: translateX(-50%); display: grid; gap: 6px; width: min(460px, calc(100% - 20px)); pointer-events: none; }
+.verlauf-toast { background: rgba(255, 252, 240, .97); color: #23301f; border-radius: 12px; padding: 7px 12px; font-weight: 700; font-size: 13px; box-shadow: 0 2px 10px rgba(0, 0, 0, .22); animation: toastEin .25s ease-out; }
+.verlauf-toast.kopf { background: #e7b64a; }
+@keyframes toastEin { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+.verlauf-liste { position: absolute; right: 10px; top: 58px; bottom: 50px; width: min(360px, calc(100% - 20px)); overflow-y: auto; background: rgba(255, 252, 240, .97); border-radius: 14px; padding: 8px; display: grid; align-content: start; gap: 4px; box-shadow: 0 4px 16px rgba(0, 0, 0, .25); }
+.verlauf-liste button { text-align: left; border: 0; background: #fff; border-radius: 10px; padding: 7px 10px; font: inherit; font-size: 13px; color: #23301f; cursor: pointer; }
+.verlauf-liste button.kopf { background: #f6e3b2; font-weight: 700; }
+.verlauf-liste p { margin: 6px; color: #5d6b55; }
+
+/* extra profile attributes (25.10.2026) */
+.p-mehr { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 12px 0 0; }
+.p-mehr div { background: rgba(127, 127, 127, .08); border-radius: 12px; padding: 8px 12px; }
+.p-mehr dt { font-size: 12px; opacity: .7; margin: 0; }
+.p-mehr dd { margin: 2px 0 0; font-weight: 600; }

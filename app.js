@@ -185,11 +185,26 @@
     if (m === "2d") { requestAnimationFrame(kAnpassen); return; }
     zaehlen("3D-Dorf");
     if (dreiD) return;
+    starte3D(null);
+  }
+  // the 3D village, for a chosen day of the replay (Tag 1 ... the newest posted day; null = the newest)
+  function starte3D(tag) {
+    $("dorf3d-status").hidden = false;
     dreiD = import("./lib/dorf3d.js").then(function (mod) {
       return mod.start($("dorf3d"), D.karte, function (hit) {
         if (hit.villager && D.karte.namen && D.karte.namen[hit.villager] && byName[D.karte.namen[hit.villager]]) profil(D.karte.namen[hit.villager]);
         else if (hit.house) { var i = D.karte.haeuser.findIndex(function (h) { return h.id === hit.house; }); if (i >= 0) kHaus(i); }
-      }, function (t) { $("dorf3d-status").textContent = t; });
+        else if (hit.gebaeude) kGebaeude(hit);
+      }, function (t) { $("dorf3d-status").textContent = t; }, {
+        verlauf: !!D.karte.verlauf,
+        tag: tag || (/[?&]tag=(\d+)/.test(location.search) ? +RegExp.$1 : null),
+        onTag: function (n) { dreiD.then(function (v) { if (v) v.ende(); starte3D(n); }); },
+        wer: function (id) { var n = D.karte.namen && D.karte.namen[id], b = n && byName[n]; return n ? n + (b && b.beruf ? " (" + b.beruf + ")" : "") : "Jemand"; },
+        verlaufStart: /[?&]um=(\d\d)(\d\d)/.test(location.search) ? +RegExp.$1 * 60 + +RegExp.$2 : null,
+        verlaufFolge: /[?&]folge=(\d+)/.test(location.search) ? +RegExp.$1 : null,
+        verlaufPlay: /[?&]play=1/.test(location.search),
+        verlaufOrt: /[?&]ort=(-?[\d.]+),(-?[\d.]+)/.test(location.search) ? [+RegExp.$1, +RegExp.$2] : null
+      });
     }).then(function (v) { $("dorf3d-status").hidden = true; return v; })
       .catch(function () { $("dorf3d-status").textContent = "Das 3D-Dorf läuft auf diesem Gerät leider nicht. Die Karte von oben geht immer."; });
   }
@@ -249,6 +264,19 @@
         return '<button type="button" class="eintrag" data-name="' + esc(b.name) + '"><span class="avatar" style="' + figur(b, 80, 16, 2) + '"></span><span class="txt"><span class="n">' + esc(b.name) + '</span><span class="b">' + esc(b.beruf) + "</span></span></button>";
       }).join("") + "</div>";
     }).join("");
+  }
+  // a building in the 3D village without a house: its place card if there is one, else everybody whose work spot is there
+  function kGebaeude(hit) {
+    var ort = (D.karte.orte || []).filter(function (o) { return Math.hypot(o.x - hit.x, o.z - hit.z) < (o.r || 10) + 4; })[0];
+    if (ort && (D.dorf || []).some(function (d) { return d.id === ort.dorf; })) { kOrt(ort.dorf); return; }
+    var leute = (D.karte.arbeit || []).filter(function (a) { return Math.hypot(a[1] - hit.x, a[2] - hit.z) < hit.r; })
+      .map(function (a) { return byName[a[0]]; }).filter(Boolean);
+    // during the day replay: who works inside right now (hidden figures at the building)
+    var drin = hit.drinnen ? (hit.drinnen(hit.x, hit.z, hit.r) || []).map(function (n) { return byName[n]; }).filter(Boolean) : [];
+    kInfo("<h3>" + esc(hit.gebaeude) + "</h3>"
+      + (drin.length ? '<p class="hinweis-klein">Arbeitet gerade hier (drinnen) ' + drin.length + ":</p>" + nachGruppen(drin, []) : "")
+      + (leute.length ? '<p class="hinweis-klein">Hier arbeiten ' + leute.length + ":</p>" + nachGruppen(leute, []) : (drin.length ? "" : "<p>Hier arbeitet gerade niemand.</p>")));
+    zaehlen("3D Gebäude", { ort: hit.gebaeude });
   }
   function kOrt(id) {
     var info = (D.dorf || []).filter(function (d) { return d.id === id; })[0];
@@ -326,7 +354,8 @@
     h += '<div class="p-kopf"><h2 id="p-name">' + esc(b.name) + '</h2><span class="beruf">' + esc(b.beruf) + "</span>";
     if (b.patreon) h += '<span class="sup-zeile">♛ Supporter · ' + esc(b.supporter) + "</span>";
     h += '<span class="ort">' + (b.wartet ? "Zieht beim nächsten Tag ein" : "Eingezogen an Tag " + b.einzug + (b.viertel ? ", wohnt " + esc(b.viertel) : "")) + "</span></div>";
-    if (b.kommentar) h += '<p class="zitat">' + esc(b.kommentar) + "</p>";
+    var mehr = [["Arbeit", b.taetigkeit], ["Wohnt in", b.haus], ["Abends meist", b.abend], ["Hilft auch bei", b.nebenrolle]].filter(function (x) { return x[1]; });
+    if (mehr.length) h += '<dl class="p-mehr">' + mehr.map(function (x) { return "<div><dt>" + x[0] + "</dt><dd>" + esc(x[1]) + "</dd></div>"; }).join("") + "</dl>";
     if (b.wartet) {
       h += '<div class="block"><p class="hinweis">Dein Kommentar ist angekommen. Du ziehst im nächsten Video ein, dann siehst du hier, was du im Dorf erlebst.</p></div>';
     } else if (!b.lebt) {
