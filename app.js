@@ -1,12 +1,13 @@
-// Das Instagram-Dorf: tabs Story / Dorf / Dorfbewohner / Lager / Karte / Unterstuetzen, a profile per name. Data: daten/dorf.json (built by Webseite/bauen.py).
+// Das Instagram-Dorf: tabs Story / Dorfbewohner / Lager / Eure Wünsche / Karte / Unterstuetzen (the old "Dorf" tab lives on the map since 26.10.2026), a profile per name. Data: daten/dorf.json (built by Webseite/bauen.py).
 (function () {
   "use strict";
   var D = null, byName = {}, nameRe = null, filter = "alle", shown = 120, tag = null, komplett = false;
   var $ = function (id) { return document.getElementById(id); };
   var SCHILDER = { dorfplatz: "Marktplatz", kirche: "Kirche", theater: "Theater", lager: "Lager", lagerfeuer: "Lagerfeuer", schule: "Schule",
     krankenhaus: "Krankenhaus", muehle: "Wassermühle", militaer: "Militärbasis", forschung: "Forschung", schwimmbad: "Heiße Quellen", acker: "Acker",
-    gemuesegarten: "Gemüsegarten", restaurant: "Restaurant", leberkaese: "Leberkäse", doenerladen: "Döner" };
-  var TABS = ["story", "dorf", "bewohner", "lager", "karte", "unterstuetzen"];
+    gemuesegarten: "Gemüsegarten", restaurant: "Restaurant", leberkaese: "Leberkäse", doenerladen: "Döner",
+    bauernhof: "Bauernhof", koppel: "Koppel", windmuehle: "Windmühle", fischer: "Fischer", wald: "Wald" };
+  var TABS = ["story", "bewohner", "lager", "wuensche", "karte", "unterstuetzen"];
   var WERTE = [["saettigung", "Satt"], ["durst", "Getrunken"], ["waerme", "Warm"], ["energie", "Energie"], ["gesundheit", "Gesundheit"], ["glaube", "Glaube"]];
   var GRUPPEN = [
     ["Essen", ["Brot", "Fisch", "Fleisch", "Beeren", "Pilze", "Gemüse", "Milch", "Käse", "Eier", "Honig", "Obst", "Suppe", "Leberkäse"]],
@@ -44,7 +45,7 @@
         .sort(function (a, b) { return b.length - a.length; }).map(function (n) { return n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); });
       nameRe = names.length ? new RegExp("(^|[^\\w.\\u0000])(" + names.join("|") + ")(?![\\w])", "g") : null;
       tag = d.geschichte.tag;
-      kopf(); tage(); story(); liste(); dorf(); lager(); karteBauen(); vonHash();
+      kopf(); tage(); story(); liste(); lager(); karteBauen(); vonHash();
     }).catch(function () { $("story-inhalt").innerHTML = '<p class="hinweis">Die Dorfdaten konnten gerade nicht geladen werden. Lade die Seite bitte neu.</p>'; });
   }
 
@@ -62,6 +63,7 @@
       $("tab-" + t).setAttribute("aria-selected", t === name ? "true" : "false");
     });
     if (name === "karte" && D && D.karte) requestAnimationFrame(kAnpassen);
+    if (name === "wuensche") wuenscheLaden();
     $("supporter-leiste").hidden = name === "unterstuetzen";   // the support tab already says it all
     if (push) { try { history.replaceState(null, "", "#" + name); } catch (e) { /* preview frame */ } }
   }
@@ -82,13 +84,6 @@
       }).join("") + "</div></article>";
   }
 
-  // ---------------------------------------------------------------- the village: its buildings
-  function dorf() {
-    $("dorf-inhalt").innerHTML = (D.dorf || []).map(function (h) {
-      return '<article class="haus"><img src="' + esc(h.bild) + '" alt="' + esc(h.name) + '" loading="lazy" width="1000" height="625"><div class="htxt"><h3>' + esc(h.name)
-        + (h.neu ? '<span class="marke neu">neu</span>' : "") + '</h3><span class="seit">' + (h.seit === 0 ? "Seit dem Anfang" : "Seit Tag " + h.seit) + "</span><p>" + verlinken(h.text) + "</p></div></article>";
-    }).join("");
-  }
   function story() {
     if (komplett) {
       $("story-inhalt").innerHTML = '<div class="komplett">' + D.geschichten.map(karte).join("") + "</div>";
@@ -170,10 +165,15 @@
       schon[id + (klein ? x : "")] = 1;
       h += '<span class="karte-schild' + (klein ? " klein" : "") + '" style="' + pos(x, z) + '">' + esc(t) + "</span>";
     }
-    (M.orte || []).forEach(function (o) { schild(o.dorf, o.x, o.z + (o.r || 0) * 0.55, o.dorf === "lagerfeuer" || o.dorf === "muehle"); });
+    (M.orte || []).forEach(function (o) { schild(o.dorf, o.x, o.z + (o.r || 0) * 0.55, ["lagerfeuer", "muehle", "koppel", "windmuehle", "fischer"].indexOf(o.dorf) >= 0); });
     M.haeuser.forEach(function (o) { if (o.dorf) schild(o.dorf, o.x, o.z + 6, o.dorf !== "kirche"); });
     $("karte-innen").innerHTML = h;
     $("karte-modus").hidden = !M.dreiD;
+    var aufKarte = {};
+    (M.orte || []).forEach(function (o) { aufKarte[o.dorf] = 1; });
+    M.haeuser.forEach(function (o) { if (o.dorf) aufKarte[o.dorf] = 1; });
+    ohneOrt = (D.dorf || []).filter(function (d) { return !aufKarte[d.id]; });
+    $("dorf-mehr").hidden = !ohneOrt.length;
     K.w = M.breite; K.h = M.hoehe;
     $("karte-innen").style.width = K.w + "px"; $("karte-innen").style.height = K.h + "px";
   }
@@ -278,6 +278,13 @@
       + (leute.length ? '<p class="hinweis-klein">Hier arbeiten ' + leute.length + ":</p>" + nachGruppen(leute, []) : (drin.length ? "" : "<p>Hier arbeitet gerade niemand.</p>")));
     zaehlen("3D Gebäude", { ort: hit.gebaeude });
   }
+  var ohneOrt = [];
+  function dorfMehr() {
+    kInfo("<h3>Mehr über das Dorf</h3>" + ohneOrt.map(function (d) {
+      return '<h4 class="pop-gruppe">' + esc(d.name) + '</h4><img src="' + esc(d.bild) + '" alt="" loading="lazy" style="width:100%;border-radius:12px;aspect-ratio:16/10;object-fit:cover"><p>' + verlinken(d.text) + "</p>";
+    }).join(""));
+    zaehlen("Karte mehr");
+  }
   function kOrt(id) {
     var info = (D.dorf || []).filter(function (d) { return d.id === id; })[0];
     if (!info) return;
@@ -321,8 +328,21 @@
     $("karte-plus").addEventListener("click", function (e) { e.stopPropagation(); kZoom(1.5); });
     $("karte-minus").addEventListener("click", function (e) { e.stopPropagation(); kZoom(1 / 1.5); });
     $("karte-reset").addEventListener("click", function (e) { e.stopPropagation(); kAnpassen(); });
+    $("dorf-mehr").addEventListener("click", dorfMehr);
     window.addEventListener("resize", function () { if (!$("panel-karte").hidden) kAnpassen(); });
   })();
+
+  // ---------------------------------------------------------------- wishes (Thomas 26.10.2026): summarised, neutral, with a count; no names, no quotes
+  var wGeladen = false;
+  function wuenscheLaden() {
+    if (wGeladen) return; wGeladen = true;
+    fetch("daten/wuensche.json", { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (w) {
+      $("wunsch-stand").textContent = "Aus euren Kommentaren · Stand " + w.stand;
+      $("wuensche").innerHTML = (w.wuensche || []).map(function (x) {
+        return '<li class="' + (x.umgesetzt ? "wunsch-da" : "") + '"><span class="zv-idee-text">' + esc(x.wunsch) + (x.umgesetzt ? '<span class="marke neu">' + esc(x.umgesetzt) + "</span>" : "") + '</span><span class="zv-anzahl">' + x.anzahl + "×</span></li>";
+      }).join("");
+    }).catch(function () { wGeladen = false; $("wuensche").innerHTML = '<li>Die Wünsche konnten gerade nicht geladen werden.</li>'; });
+  }
 
   // ---------------------------------------------------------------- storehouse
   function lager() {
@@ -400,6 +420,7 @@
   }
   function vonHash() {
     var n = decodeURIComponent(location.hash.slice(1));
+    if (n === "dorf") n = "karte";   // the old "Dorf" tab is on the map now
     if (TABS.indexOf(n) >= 0) { zeigeTab(n); return; }
     if (n && byName[n]) { zeigeTab("bewohner"); profil(n); }
   }
@@ -498,20 +519,26 @@
     if (farm) farm.then(function (f) { if (f) f.namen(an); });
   });
   // stock: numbers only (Regie.json lager.stand via zombieville.py); icons from the village set where one fits
-  var LAGER = { holz: ["Holz", "ikonen/holz.webp"], essen: ["Essen", "ikonen/mahlzeit.webp"], pilze: ["Pilze", "ikonen/pilze.webp"], beeren: ["Beeren", "ikonen/beeren.webp"],
-    fasern: ["Fasern", "ikonen/hanffaser.webp"], steine: ["Steine", "bilder_zombie/stein.webp"], boegen: ["Bögen", "bilder_zombie/bogen.webp"], pfeile: ["Pfeile", "bilder_zombie/pfeil.webp"] };
+  // all stock keys of the game (spiel/js/zustand.js INVENTAR, 26.10.2026) + Regie.json; [name, icon picture or emoji]
+  var LAGER = { holz: ["Holz", "ikonen/holz.webp"], steine: ["Steine", "bilder_zombie/stein.webp"], feuerstein: ["Feuersteine", "◆"], fasern: ["Fasern", "ikonen/hanffaser.webp"],
+    essen: ["Essen", "ikonen/mahlzeit.webp"], pilze: ["Pilze", "ikonen/pilze.webp"], beeren: ["Beeren", "ikonen/beeren.webp"], aepfel: ["Äpfel", "ikonen/aepfel.webp"],
+    gemuese: ["Gemüse", "ikonen/gemuese.webp"], mais: ["Maiskolben", "🌽"], kraeuter: ["Heilkräuter", "ikonen/kraeuter.webp"], heilkraut: ["Heilkräuter", "ikonen/kraeuter.webp"],
+    eintopf: ["Eintöpfe", "ikonen/eintopf.webp"], grillmais: ["Gegrillte Maiskolben", "🔥"], boegen: ["Bögen", "bilder_zombie/bogen.webp"], pfeile: ["Pfeile", "bilder_zombie/pfeil.webp"],
+    gemuesesamen: ["Gemüsesamen", "🌱"], maiskoerner: ["Maiskörner", "🌾"] };
+  // unknown keys are shown too, with a readable name ("neuer_posten" -> "Neuer posten")
+  function lagerName(k) { var n = k.replace(/_/g, " "); return n.charAt(0).toUpperCase() + n.slice(1); }
   var ZAHLWORT = { holz: "Holz", essen: "Essen" };
   function zvLager(l) {
     if (!l) { $("zv-lager-stand").textContent = "Noch kein Lagerbestand"; return; }
     $("zv-lager-stand").textContent = "Stand Tag " + l.tag + " · " + l.bewohner + " Bewohner";
     var html = (l.bestand || []).map(function (b) {
-      var i = LAGER[b.id] || [b.id.charAt(0).toUpperCase() + b.id.slice(1), ""];
-      return '<li class="zv-ware' + (b.anzahl ? "" : " zv-ware-leer") + '">' + (i[1] ? '<img src="' + i[1] + '" alt="" width="56" height="56" loading="lazy">' : '<span class="zv-ware-ohne" aria-hidden="true"></span>') +
+      var i = LAGER[b.id] || [lagerName(b.id), "📦"], bild = /\.webp$/.test(i[1]);
+      return '<li class="zv-ware' + (b.anzahl ? "" : " zv-ware-leer") + '">' + (bild ? '<img src="' + i[1] + '" alt="" width="56" height="56" loading="lazy">' : '<span class="zv-ware-ohne" aria-hidden="true">' + esc(i[1]) + "</span>") +
         '<span class="zv-ware-zahl">' + b.anzahl + '</span><span class="zv-ware-name">' + esc(i[0]) + "</span></li>";
     }).join("");
     if (l.wasser) html += '<li class="zv-ware zv-ware-wasser"><span class="zv-ware-ohne" aria-hidden="true">💧</span><span class="zv-ware-zahl">∞</span><span class="zv-ware-name">Wasser <small>aus dem ' + esc(String(l.wasser).replace(/\s*\(.*\)/, "")) + "</small></span></li>";
     $("zv-lager").innerHTML = html;
-    var m = l.mitbringen || {}, teile = Object.keys(m).filter(function (k) { return m[k]; }).map(function (k) { return m[k] + " " + (ZAHLWORT[k] || (LAGER[k] || [k])[0]); });
+    var m = l.mitbringen || {}, teile = Object.keys(m).filter(function (k) { return m[k]; }).map(function (k) { return m[k] + " " + (ZAHLWORT[k] || (LAGER[k] || [lagerName(k)])[0]); });
     if (teile.length) { $("zv-lager-regel").innerHTML = "<strong>Jeder neue Bewohner bringt " + esc(teile.join(" und ")) + " mit.</strong> Das kommt direkt ins Lager."; $("zv-lager-regel").hidden = false; }
   }
   // Zombieville data: daten/zombieville.json (Tools/Kommentare/zombieville.py) - only what the posted videos and comments show

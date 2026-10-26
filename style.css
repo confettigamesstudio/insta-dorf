@@ -373,3 +373,8 @@ html.welt-zv .kopf:not(.zv-kopf), html.welt-zv .reiter-leiste, html.welt-zv main
 .zv-lager-regel { margin: 0; background: #f6e3d6; color: #4a2318; border-radius: 14px; padding: 12px 14px; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .zv-lager-regel { background: #3a221b; color: #f3d6c8; } }
 :root[data-theme="dark"] .zv-lager-regel { background: #3a221b; color: #f3d6c8; }
+
+/* Insta-Dorf: "Eure Wünsche" tab + place cards that have no spot on the map (Thomas 26.10.2026) */
+.wunsch-block .zv-idee-text .marke { margin-left: 8px; vertical-align: 2px; }
+.wunsch-block li.wunsch-da .zv-idee-text { color: var(--leise); }
+.dorf-mehr { justify-self: start; }
