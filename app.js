@@ -489,7 +489,7 @@
   function hashSetzen(h) { try { history.replaceState(null, "", h ? "#" + h : location.pathname + location.search); } catch (e) { /* preview frame */ } }
 
   // Zombieville tabs (Thomas 26.10.2026): Übersicht (default), Farm (3D map, only a view), Lager (stock); the tab is kept in the hash (#zv-farm)
-  var ZV_TABS = ["uebersicht", "farm", "lager"], tabStart = null, farm = null;
+  var ZV_TABS = ["uebersicht", "farm", "lager", "crafting"], tabStart = null, farm = null;
   function zvTab(name, merken) {
     if (ZV_TABS.indexOf(name) < 0) name = "uebersicht";
     ZV_TABS.forEach(function (t) {
@@ -497,6 +497,7 @@
       $("zv-tab-" + t).setAttribute("aria-selected", t === name ? "true" : "false");
     });
     zvFarmZeigen(name === "farm");
+    if (name === "crafting") zvCraftingLaden();
     if (merken) hashSetzen("zv-" + name);
   }
   function zvFarmZeigen(an) {
@@ -519,24 +520,58 @@
     if (farm) farm.then(function (f) { if (f) f.namen(an); });
   });
   // stock: numbers only (Regie.json lager.stand via zombieville.py); icons from the village set where one fits
-  // all stock keys of the game (spiel/js/zustand.js INVENTAR, 26.10.2026) + Regie.json; [name, icon picture or emoji]
-  var LAGER = { holz: ["Holz", "ikonen/holz.webp"], steine: ["Steine", "bilder_zombie/stein.webp"], feuerstein: ["Feuersteine", "◆"], fasern: ["Fasern", "ikonen/hanffaser.webp"],
-    essen: ["Essen", "ikonen/mahlzeit.webp"], pilze: ["Pilze", "ikonen/pilze.webp"], beeren: ["Beeren", "ikonen/beeren.webp"], aepfel: ["Äpfel", "ikonen/aepfel.webp"],
-    gemuese: ["Gemüse", "ikonen/gemuese.webp"], mais: ["Maiskolben", "🌽"], kraeuter: ["Heilkräuter", "ikonen/kraeuter.webp"], heilkraut: ["Heilkräuter", "ikonen/kraeuter.webp"],
-    eintopf: ["Eintöpfe", "ikonen/eintopf.webp"], grillmais: ["Gegrillte Maiskolben", "🔥"], boegen: ["Bögen", "bilder_zombie/bogen.webp"], pfeile: ["Pfeile", "bilder_zombie/pfeil.webp"],
-    gemuesesamen: ["Gemüsesamen", "🌱"], maiskoerner: ["Maiskörner", "🌾"] };
+  // all stock keys of the game (spiel/js/zustand.js INVENTAR, 26.10.2026) + Regie.json; [name, emoji if there is no icon]
+  // icons: bilder_zombie/icons/<key>.webp (block style, Webseite/zombieville_icons.mjs), the emoji only if the picture is missing
+  var LAGER = { holz: ["Holz", "🪵"], steine: ["Steine", "🪨"], feuerstein: ["Feuersteine", "◆"], fasern: ["Fasern", "🌿"], essen: ["Essen", "🥫"], pilze: ["Pilze", "🍄"],
+    beeren: ["Beeren", "🍒"], aepfel: ["Äpfel", "🍎"], gemuese: ["Gemüse", "🥕"], mais: ["Maiskolben", "🌽"], kraeuter: ["Heilkräuter", "☘️"], heilkraut: ["Heilkräuter", "☘️"],
+    eintopf: ["Eintöpfe", "🍲"], grillmais: ["Gegrillte Maiskolben", "🔥"], boegen: ["Bögen", "🏹"], pfeile: ["Pfeile", "➶"], gemuesesamen: ["Gemüsesamen", "🌱"], maiskoerner: ["Maiskörner", "🌾"] };
+  function ikone(key, emoji, px) {
+    return '<span class="zv-ikone" style="width:' + px + "px;height:" + px + 'px"><img src="bilder_zombie/icons/' + esc(key) + '.webp" alt="" width="' + px + '" height="' + px + '" loading="lazy" onerror="this.replaceWith(document.createTextNode(this.parentNode.getAttribute(\'data-e\')))"></span>';
+  }
   // unknown keys are shown too, with a readable name ("neuer_posten" -> "Neuer posten")
   function lagerName(k) { var n = k.replace(/_/g, " "); return n.charAt(0).toUpperCase() + n.slice(1); }
   var ZAHLWORT = { holz: "Holz", essen: "Essen" };
+  // crafting (Thomas 26.10.2026): sections with cards; found = icon + name (tap: how to make it), not found = "?"
+  var craftGeladen = false, craft = null;
+  function zvCraftingLaden() {
+    if (craftGeladen) return; craftGeladen = true;
+    fetch("daten/zombieville_crafting.json", { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (c) {
+      craft = c;
+      $("zv-crafting-stand").textContent = c.gefunden + " von " + c.gesamt + " Rezepten gefunden";
+      $("zv-crafting").innerHTML = c.rubriken.map(function (ru) {
+        var n = ru.rezepte.length + ru.verborgen;
+        return '<div class="zv-rubrik"><h3>' + esc(ru.name) + (n ? " <small>" + ru.rezepte.length + "/" + n + "</small>" : "") + "</h3>"
+          + (n ? '<ul class="zv-karten">' + ru.rezepte.map(function (r) {
+            var e = r.ergebnis[0] ? r.ergebnis[0].key : (r.zutaten[0] ? r.zutaten[0].key : "");
+            return '<li><button type="button" class="zv-karte" data-rezept="' + esc(r.id) + '">' + ikone(e, "📦", 64).replace('class="zv-ikone"', 'class="zv-ikone" data-e="📦"')
+              + '<span class="zv-karte-name">' + esc(r.name) + "</span>" + (r.geheim ? '<span class="zv-karte-geheim">entdeckt</span>' : "") + "</button></li>";
+          }).join("") + new Array(ru.verborgen + 1).join('<li><div class="zv-karte zv-karte-zu" aria-label="Noch nicht gefunden"><span class="zv-fragezeichen">?</span><span class="zv-karte-name">Noch nicht gefunden</span></div></li>') + "</ul>"
+          : '<p class="hinweis-klein">Kommt bald.</p>') + "</div>";
+      }).join("");
+    }).catch(function () { craftGeladen = false; $("zv-crafting").innerHTML = "<p>Die Rezepte konnten gerade nicht geladen werden.</p>"; });
+  }
+  function teil(t) { return '<li>' + ikone(t.key, "📦", 44).replace('class="zv-ikone"', 'class="zv-ikone" data-e="📦"') + '<span class="zv-teil-zahl">' + t.anzahl + "×</span><span>" + esc(t.name) + "</span></li>"; }
+  function zvRezept(id) {
+    var r = null; (craft ? craft.rubriken : []).forEach(function (ru) { ru.rezepte.forEach(function (x) { if (x.id === id) r = x; }); });
+    if (!r) return;
+    var e = r.ergebnis[0] ? r.ergebnis[0].key : (r.zutaten[0] ? r.zutaten[0].key : "");
+    var h = '<div class="zv-rezept-kopf">' + ikone(e, "📦", 72).replace('class="zv-ikone"', 'class="zv-ikone" data-e="📦"') + "<h3>" + esc(r.name) + "</h3></div>";
+    h += r.zutaten.length ? '<p class="hinweis-klein">Du brauchst</p><ul class="zv-teile">' + r.zutaten.map(teil).join("") + "</ul>" : '<p class="hinweis-klein">Ohne Zutaten</p>';
+    if (r.ergebnis.length) h += '<p class="zv-pfeil" aria-hidden="true">↓</p><p class="hinweis-klein">Ergebnis</p><ul class="zv-teile">' + r.ergebnis.map(teil).join("") + "</ul>";
+    h += '<dl class="zv-rezept-info">' + (r.station ? "<div><dt>Wo</dt><dd>" + esc(r.station) + "</dd></div>" : "") + (r.fertigkeit ? "<div><dt>Fertigkeit</dt><dd>" + esc(r.fertigkeit) + (r.xp ? " · " + r.xp + " Erfahrung" : "") + "</dd></div>" : "") + "</dl>";
+    if (r.hinweis) h += '<p class="hinweis-klein">' + esc(r.hinweis) + "</p>";
+    $("pop-inhalt").innerHTML = h; $("pop").hidden = false; $("pop-hg").hidden = false; $("pop").scrollTop = 0; $("pop-zu").focus();
+  }
+  document.addEventListener("click", function (ev) { var k = ev.target.closest("[data-rezept]"); if (k) zvRezept(k.getAttribute("data-rezept")); });
   function zvLager(l) {
     if (!l) { $("zv-lager-stand").textContent = "Noch kein Lagerbestand"; return; }
     $("zv-lager-stand").textContent = "Stand Tag " + l.tag + " · " + l.bewohner + " Bewohner";
     var html = (l.bestand || []).map(function (b) {
-      var i = LAGER[b.id] || [lagerName(b.id), "📦"], bild = /\.webp$/.test(i[1]);
-      return '<li class="zv-ware' + (b.anzahl ? "" : " zv-ware-leer") + '">' + (bild ? '<img src="' + i[1] + '" alt="" width="56" height="56" loading="lazy">' : '<span class="zv-ware-ohne" aria-hidden="true">' + esc(i[1]) + "</span>") +
+      var i = LAGER[b.id] || [lagerName(b.id), "📦"];
+      return '<li class="zv-ware' + (b.anzahl ? "" : " zv-ware-leer") + '">' + ikone(b.id, i[1], 56).replace('class="zv-ikone"', 'class="zv-ikone zv-ware-ohne" data-e="' + esc(i[1]) + '"') +
         '<span class="zv-ware-zahl">' + b.anzahl + '</span><span class="zv-ware-name">' + esc(i[0]) + "</span></li>";
     }).join("");
-    if (l.wasser) html += '<li class="zv-ware zv-ware-wasser"><span class="zv-ware-ohne" aria-hidden="true">💧</span><span class="zv-ware-zahl">∞</span><span class="zv-ware-name">Wasser <small>aus dem ' + esc(String(l.wasser).replace(/\s*\(.*\)/, "")) + "</small></span></li>";
+    if (l.wasser) html += '<li class="zv-ware zv-ware-wasser">' + ikone("wasser", "💧", 56).replace('class="zv-ikone"', 'class="zv-ikone zv-ware-ohne" data-e="💧"') + '<span class="zv-ware-zahl">∞</span><span class="zv-ware-name">Wasser <small>aus dem ' + esc(String(l.wasser).replace(/\s*\(.*\)/, "")) + "</small></span></li>";
     $("zv-lager").innerHTML = html;
     var m = l.mitbringen || {}, teile = Object.keys(m).filter(function (k) { return m[k]; }).map(function (k) { return m[k] + " " + (ZAHLWORT[k] || (LAGER[k] || [lagerName(k)])[0]); });
     if (teile.length) { $("zv-lager-regel").innerHTML = "<strong>Jeder neue Bewohner bringt " + esc(teile.join(" und ")) + " mit.</strong> Das kommt direkt ins Lager."; $("zv-lager-regel").hidden = false; }

@@ -378,3 +378,31 @@ html.welt-zv .kopf:not(.zv-kopf), html.welt-zv .reiter-leiste, html.welt-zv main
 .wunsch-block .zv-idee-text .marke { margin-left: 8px; vertical-align: 2px; }
 .wunsch-block li.wunsch-da .zv-idee-text { color: var(--leise); }
 .dorf-mehr { justify-self: start; }
+
+/* Zombieville "Crafting" tab (Thomas 26.10.2026): sections of cards, "?" for recipes nobody has found yet */
+.zv-ikone { display: inline-grid; place-items: center; flex: 0 0 auto; font-size: 30px; line-height: 1; }
+.zv-ikone img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.zv-rubrik { display: grid; gap: 10px; margin-top: 8px; }
+.zv-rubrik h3 { margin: 0; }
+.zv-rubrik h3 small { color: var(--leise); font: 600 14px var(--body); margin-left: 6px; }
+.zv-karten { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
+@media (max-width: 520px) { .zv-karten { grid-template-columns: repeat(3, 1fr); gap: 8px; } }
+.zv-karte { width: 100%; height: 100%; min-height: 128px; display: grid; justify-items: center; align-content: start; gap: 6px; padding: 12px 6px 10px; border-radius: 16px;
+  background: var(--flaeche-2); border: 2px solid transparent; font: inherit; color: var(--text); cursor: pointer; text-align: center; position: relative; }
+button.zv-karte:hover, button.zv-karte:focus-visible { border-color: #9a3b2a; outline: none; }
+.zv-karte-name { font-weight: 700; font-size: 14px; line-height: 1.2; }
+.zv-karte-geheim { position: absolute; top: 6px; right: 6px; font: 700 10px var(--body); text-transform: uppercase; letter-spacing: .04em; background: #9a3b2a; color: #fff; border-radius: 999px; padding: 1px 6px; }
+.zv-karte-zu { cursor: default; background: repeating-linear-gradient(135deg, var(--flaeche-2) 0 10px, transparent 10px 20px); border: 2px dashed var(--linie); }
+.zv-karte-zu .zv-karte-name { color: var(--leise); font-weight: 600; font-size: 12px; }
+.zv-fragezeichen { width: 64px; height: 64px; display: grid; place-items: center; font: 700 44px/1 var(--display); color: var(--leise); }
+.zv-rezept-kopf { display: flex; align-items: center; gap: 12px; margin-right: 44px; }
+.zv-rezept-kopf h3 { margin: 0; }
+.zv-teile { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.zv-teile li { display: flex; align-items: center; gap: 10px; background: var(--flaeche-2); border-radius: 12px; padding: 6px 10px; font-weight: 700; }
+.zv-teil-zahl { font: 700 18px var(--display); min-width: 2.2em; }
+.zv-pfeil { margin: 4px 0 0; text-align: center; font-size: 22px; color: var(--leise); }
+.zv-rezept-info { margin: 10px 0 0; display: grid; gap: 4px; }
+.zv-rezept-info div { display: flex; gap: 8px; }
+.zv-rezept-info dt { color: var(--leise); min-width: 6.5em; }
+.zv-rezept-info dd { margin: 0; font-weight: 700; }
+@media (max-width: 520px) { .zv-leiste .reiter { flex-wrap: nowrap; justify-content: center; } .zv-leiste .reiter-knopf { font-size: 15px; padding: 10px 8px 8px; } }
