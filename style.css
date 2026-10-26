@@ -287,11 +287,11 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 @media (max-width: 720px) { .welten-wahl { grid-template-columns: 1fr; } }
 .welt { position: relative; display: grid; grid-template-rows: auto 1fr; border: 0; padding: 0; border-radius: 22px; overflow: hidden; text-align: left;
   font: inherit; color: #fff; background: #1d261c; box-shadow: 0 14px 40px rgba(0, 0, 0, .5); min-height: 360px; }
-.welt-dorf { cursor: pointer; outline: 3px solid transparent; transition: transform .15s, outline-color .15s; }
-.welt-dorf:hover, .welt-dorf:focus-visible { transform: translateY(-3px); outline-color: #f2c04a; }
+.welt-dorf, .welt-zombie { cursor: pointer; outline: 3px solid transparent; transition: transform .15s, outline-color .15s; }
+.welt-dorf:hover, .welt-dorf:focus-visible, .welt-zombie:hover, .welt-zombie:focus-visible { transform: translateY(-3px); outline-color: #f2c04a; }
 .welt-bild { display: block; aspect-ratio: 16 / 10; background: center / cover no-repeat; }
 .welt-dorf .welt-bild { background-image: url("daten/kopf.webp"); }
-.welt-zombie .welt-bild { background-image: url("bilder/zombieville.webp"); }
+.welt-zombie .welt-bild { background-image: url("bilder_zombie/plakat.webp"); }
 .zombie-mond { position: absolute; right: 16%; top: 16%; width: 22%; aspect-ratio: 1; border-radius: 50%; background: #e9e4c8; box-shadow: 0 0 60px rgba(233, 228, 200, .45); }
 .zombie-hand { position: absolute; left: 50%; bottom: 6%; transform: translateX(-50%); font-size: clamp(64px, 12vw, 110px); filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .6)); }
 .welt-text { display: grid; gap: 8px; padding: 18px 20px 22px; align-content: start; }
@@ -301,7 +301,6 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .welt-unter { color: #c9d4c2; font-size: 15px; max-width: 46ch; }
 .welt-los { justify-self: start; margin-top: 6px; background: #3f8a3a; color: #fff; font: 700 16px var(--display); padding: 10px 18px; border-radius: 999px; }
 .welt-bald { justify-self: start; margin-top: 6px; background: #3a2b2b; color: #ffb3a1; font: 700 15px var(--display); padding: 9px 16px; border-radius: 999px; letter-spacing: .04em; }
-.welt-zombie { cursor: not-allowed; opacity: .92; }
 
 /* the world bar above the village header: always visible, switch worlds */
 .weltleiste { background: #151d14; border-bottom: 1px solid rgba(255, 255, 255, .08); padding-top: env(safe-area-inset-top, 0px); }
@@ -314,3 +313,36 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .weltknopf:hover:not(.aktiv), .weltknopf:focus-visible { border-color: #f2c04a; outline: none; }
 .weltknopf-alle { margin-left: auto; }
 @media (max-width: 520px) { .weltleiste-titel { display: none; } .weltknopf { padding: 6px 11px; font-size: 13px; } }
+
+/* Zombieville (Thomas 26.10.2026): its own world page in the same style; shown instead of the village while chosen */
+html.welt-zv .kopf:not(.zv-kopf), html.welt-zv .reiter-leiste, html.welt-zv main:not(.zv-main), html.welt-zv #supporter-leiste { display: none; }
+.welt-los-zombie { background: #9a3b2a; }
+.weltknopf.aktiv.weltknopf-zv { background: #9a3b2a; border-color: #9a3b2a; }
+.zv-kopf { background: #1e2a1c; }
+.zv-kopf-bild { background-image: url("bilder_zombie/plakat.webp"); background-position: center 55%; }
+.zv-kopf-bild::after { background: linear-gradient(180deg, rgba(12, 16, 12, .25) 0%, rgba(12, 16, 12, .5) 45%, rgba(10, 12, 10, .9) 100%); }
+.zv-kopf h1 { color: #b9e07a; }
+.zv-main { gap: 22px; }
+.zv-block { background: var(--flaeche); border-radius: 20px; padding: 22px clamp(18px, 4vw, 30px); box-shadow: var(--schatten); display: grid; gap: 12px; }
+.zv-block h2 { font-size: clamp(22px, 4.4vw, 30px); }
+.zv-block h3 { font-size: 19px; margin-top: 8px; }
+.zv-video { grid-template-columns: minmax(120px, 200px) 1fr; gap: 20px; align-items: center; }
+@media (max-width: 520px) { .zv-video { grid-template-columns: 110px 1fr; gap: 14px; } .zv-video-text p:not(.etikett) { font-size: 15px; } }
+.zv-video-bild { display: block; border-radius: 14px; overflow: hidden; box-shadow: 0 6px 18px rgba(0, 0, 0, .25); }
+.zv-video-bild img { display: block; width: 100%; height: auto; }
+.zv-video-text { display: grid; gap: 8px; }
+.zv-video-text p { margin: 0; }
+.zv-knopf { text-decoration: none; background: #9a3b2a; }
+.zv-knopf:hover { background: #7d2f21; }
+.zv-schritte { margin: 0; padding-left: 1.4em; display: grid; gap: 8px; }
+.zv-schritte a { color: var(--gruen-tief); font-weight: 700; }
+.zv-ideen { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: idee; }
+.zv-ideen li { counter-increment: idee; display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; background: var(--flaeche-2); border-radius: 14px; padding: 12px 14px; }
+.zv-ideen li::before { content: counter(idee); grid-row: span 2; align-self: center; font: 700 22px var(--display); color: var(--rot); min-width: 1.2em; text-align: center; }
+.zv-idee-text { font-weight: 700; }
+.zv-idee-von { color: var(--leise); font-size: 14px; overflow-wrap: anywhere; }
+.zv-rollen { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.zv-rollen li { border: 2px solid var(--linie); border-radius: 999px; padding: 4px 12px; font-weight: 700; font-size: 14px; }
+.zv-rollen small { color: var(--leise); margin-left: 4px; }
+.zv-patreon { margin-block: 0; }
+.zv-patreon .knopf { text-decoration: none; background: var(--gold); color: #3a2a00; }

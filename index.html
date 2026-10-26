@@ -10,7 +10,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Das Instagram-Dorf: die Geschichte jedes Tages, alle Bewohner mit Profil und das Lager.">
 <link rel="stylesheet" href="schrift/schriften.css">
-<link rel="stylesheet" href="style.css?v=798acaf1">
+<link rel="stylesheet" href="style.css?v=db87ce56">
 
 <section class="welten" id="welten" aria-labelledby="welten-titel" hidden>
   <div class="welten-innen">
@@ -25,14 +25,14 @@
           <span class="welt-los">Ins Dorf →</span>
         </span>
       </button>
-      <div class="welt welt-zombie" aria-disabled="true">
+      <button type="button" class="welt welt-zombie" id="welt-zombie" data-umami-event="Welt" data-umami-event-welt="Zombieville">
         <span class="welt-bild" aria-hidden="true"></span>
         <span class="welt-text">
           <span class="welt-logo">Zombieville</span>
-          <span class="welt-unter">Die Zombie-Apokalypse. Eine neue Welt – überlebst du sie?</span>
-          <span class="welt-bald">Coming Soon</span>
+          <span class="welt-unter">Die Zombie-Apokalypse: ein Camp, das überleben soll. Du entscheidest in den Kommentaren, was wir tun – und ziehst selbst ein.</span>
+          <span class="welt-los welt-los-zombie">Ins Camp →</span>
         </span>
-      </div>
+      </button>
     </div>
   </div>
 </section>
@@ -40,11 +40,67 @@
 <nav class="weltleiste" aria-label="Welt wechseln">
   <div class="huelle weltleiste-innen">
     <span class="weltleiste-titel">Welt:</span>
-    <button type="button" class="weltknopf aktiv" aria-current="true">🏡 Insta-Dorf</button>
-    <button type="button" class="weltknopf" id="welt-wechseln-zombie">🧟 Zombieville <small>bald</small></button>
+    <button type="button" class="weltknopf aktiv" id="welt-wechseln-dorf" aria-current="true">🏡 Insta-Dorf</button>
+    <button type="button" class="weltknopf" id="welt-wechseln-zombie">🧟 Zombieville</button>
     <button type="button" class="weltknopf weltknopf-alle" id="welten-zurueck">Alle Welten</button>
   </div>
 </nav>
+
+<div class="zv" id="zombieville" hidden>
+  <header class="kopf zv-kopf">
+    <div class="kopf-bild zv-kopf-bild" aria-hidden="true"></div>
+    <div class="huelle kopf-innen">
+      <p class="kicker">Die Zombie-Apokalypse</p>
+      <h1>Zombieville</h1>
+      <p class="unter">Ein Camp, das die Zombie-Apokalypse überleben soll. Ihr entscheidet in den Kommentaren, was wir tun – und wer kommentiert, zieht ins Camp ein.</p>
+      <a class="patreon-knopf" href="https://www.patreon.com/ReisendeGedanken" target="_blank" rel="noopener" data-umami-event="Patreon" data-umami-event-ort="zombieville-oben">Unterstütze Zombieville auf Patreon</a>
+      <dl class="zahlen">
+        <div><dt>Tag</dt><dd id="zv-tag">0</dd></div>
+        <div><dt>Überlebende</dt><dd id="zv-ueberlebende">0</dd></div>
+        <div><dt id="zv-einzug-titel">Ziehen an Tag 1 ein</dt><dd id="zv-einzug">…</dd></div>
+      </dl>
+    </div>
+  </header>
+  <main class="huelle zv-main">
+    <section class="zv-block zv-video" aria-labelledby="zv-video-titel">
+      <a class="zv-video-bild" id="zv-video-link" href="https://www.instagram.com/p/De9R926g-bM/" target="_blank" rel="noopener" data-umami-event="Zombieville Video">
+        <img id="zv-video-img" src="bilder_zombie/video0.webp" alt="Zombieville Tag 0: das Camp-Tor, dahinter die Zombies" width="540" height="960" loading="lazy">
+      </a>
+      <div class="zv-video-text">
+        <p class="etikett" id="zv-video-etikett">Video 0 · Tag 0</p>
+        <h2 id="zv-video-titel">So fängt es an</h2>
+        <p>Ein Camp mit Zaun und Tor, draußen auf der Straße die Zombies. Noch wohnt niemand hier – ab Tag 1 ziehen die ersten Überlebenden aus den Kommentaren ein.</p>
+        <a class="knopf zv-knopf" id="zv-video-knopf" href="https://www.instagram.com/p/De9R926g-bM/" target="_blank" rel="noopener" data-umami-event="Zombieville Video">Video auf Instagram ansehen</a>
+      </div>
+    </section>
+
+    <section class="zv-block" aria-labelledby="zv-mitmachen-titel">
+      <h2 id="zv-mitmachen-titel">So kommst du ins Camp</h2>
+      <ol class="zv-schritte">
+        <li><strong>Folge <a href="https://www.instagram.com/reisendegedanken/" target="_blank" rel="noopener">@reisendegedanken</a></strong> auf Instagram.</li>
+        <li><strong>Kommentiere unter dem neuesten Video:</strong> Was sollen wir tun, um zu überleben? Mauern bauen, Fallen stellen, Felder anlegen, Waffen schmieden …</li>
+        <li><strong>Schreib dazu, wie du hilfst:</strong> als Jäger, Ärztin, Wache am Tor, Mechaniker … egal was.</li>
+      </ol>
+      <p class="hinweis-klein">Wer kommentiert und dem Kanal folgt, zieht am nächsten Tag ins Camp ein. Die besten Ideen setzen wir um.</p>
+    </section>
+
+    <section class="zv-block" id="zv-ideen-block" aria-labelledby="zv-ideen-titel" hidden>
+      <h2 id="zv-ideen-titel">Eure Ideen</h2>
+      <p class="hinweis-klein" id="zv-ideen-stand"></p>
+      <ol class="zv-ideen" id="zv-ideen"></ol>
+      <div id="zv-rollen-block" hidden>
+        <h3>So wollt ihr helfen</h3>
+        <ul class="zv-rollen" id="zv-rollen"></ul>
+      </div>
+    </section>
+
+    <aside class="supporter-leiste zv-patreon">
+      <span class="supporter-krone">♛</span>
+      <p><strong>Krone und Aura im Spiel + Einblicke hinter die Kulissen?</strong> Zombieville läuft über dasselbe Patreon wie das Insta-Dorf.</p>
+      <a class="knopf" href="https://www.patreon.com/ReisendeGedanken" target="_blank" rel="noopener" data-umami-event="Patreon" data-umami-event-ort="zombieville-leiste">Zu Patreon</a>
+    </aside>
+  </main>
+</div>
 
 <header class="kopf">
   <div class="kopf-bild" aria-hidden="true"></div>
@@ -169,7 +225,7 @@
 </footer>
 
 <script defer src="https://cloud.umami.is/script.js" data-website-id="80cb14ef-1eda-40cc-8519-9f694c1fff23" data-domains="instadorf.de"></script>
-<script src="app.js?v=39d9191f"></script>
+<script src="app.js?v=c10ca2e4"></script>
 
 </body>
 </html>

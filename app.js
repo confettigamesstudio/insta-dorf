@@ -442,11 +442,58 @@
   laden();
 })();
 
-/* World chooser (Thomas 26.10.2026): ALWAYS shown when the page opens; the world bar switches back */
+/* World chooser (Thomas 26.10.2026): ALWAYS shown when the page opens; the world bar switches between the worlds and back */
 (function () {
   var w = document.getElementById("welten"); if (!w) return;
+  var zv = document.getElementById("zombieville"), geladen = false;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function zeigen(an) { w.hidden = !an; document.documentElement.style.overflow = an ? "hidden" : ""; if (an) w.scrollTop = 0; }
+  function welt(name) {
+    var z = name === "zombieville";
+    if (zv) zv.hidden = !z;
+    document.documentElement.classList.toggle("welt-zv", z);
+    [["welt-wechseln-dorf", !z], ["welt-wechseln-zombie", z]].forEach(function (p) {
+      var b = $(p[0]); if (!b) return;
+      b.classList.toggle("aktiv", p[1]); b.classList.toggle("weltknopf-zv", p[1] && z);
+      if (p[1]) b.setAttribute("aria-current", "true"); else b.removeAttribute("aria-current");
+    });
+    document.title = z ? "Zombieville" : "Insta-Dorf";
+    if (z && !geladen) zvLaden();
+    zeigen(false); window.scrollTo(0, 0);
+  }
+  // Zombieville data: daten/zombieville.json (Tools/Kommentare/zombieville.py) - only what the posted videos and comments show
+  function zvLaden() {
+    geladen = true;
+    fetch("daten/zombieville.json", { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
+      $("zv-tag").textContent = d.tag;
+      $("zv-ueberlebende").textContent = d.ueberlebende;
+      $("zv-einzug-titel").textContent = "Ziehen an " + d.einzugTag + " ein";
+      $("zv-einzug").textContent = d.einzug;
+      var v = (d.videos || [])[d.videos.length - 1];
+      if (v) {
+        $("zv-video-link").href = v.link; $("zv-video-knopf").href = v.link; $("zv-video-img").src = v.bild;
+        $("zv-video-etikett").textContent = v.name + " · Tag " + d.tag;
+      }
+      if (d.ideen && d.ideen.length) {
+        $("zv-ideen").innerHTML = d.ideen.map(function (i) {
+          return '<li><span class="zv-idee-text">' + esc(i.idee) + '</span><span class="zv-idee-von">von ' + i.von.map(function (n) { return "@" + esc(n); }).join(", ")
+            + (i.likes ? " · " + i.likes + " Likes" : "") + "</span></li>";
+        }).join("");
+        $("zv-ideen-block").hidden = false;
+      } else $("zv-ideen").hidden = true;
+      $("zv-ideen-stand").textContent = d.kommentare + (d.kommentare === 1 ? " Kommentar" : " Kommentare") + " bisher, Stand " + d.stand + ".";
+      if (d.rollen && d.rollen.length) {
+        $("zv-rollen").innerHTML = d.rollen.map(function (r) { return "<li>" + esc(r.rolle) + (r.anzahl > 1 ? "<small>× " + r.anzahl + "</small>" : "") + "</li>"; }).join("");
+        $("zv-rollen-block").hidden = false;
+        $("zv-ideen-block").hidden = false;
+      }
+    }).catch(function () { $("zv-einzug").textContent = "–"; geladen = false; });
+  }
   zeigen(true);
-  document.getElementById("welt-dorf").addEventListener("click", function () { zeigen(false); window.scrollTo(0, 0); });
-  ["welten-zurueck", "welt-wechseln-zombie"].forEach(function (id) { var b = document.getElementById(id); if (b) b.addEventListener("click", function () { zeigen(true); }); });
+  $("welt-dorf").addEventListener("click", function () { welt("dorf"); });
+  var wz = $("welt-zombie"); if (wz) wz.addEventListener("click", function () { welt("zombieville"); });
+  var bd = $("welt-wechseln-dorf"); if (bd) bd.addEventListener("click", function () { welt("dorf"); });
+  var bz = $("welt-wechseln-zombie"); if (bz) bz.addEventListener("click", function () { welt("zombieville"); });
+  var bz2 = $("welten-zurueck"); if (bz2) bz2.addEventListener("click", function () { zeigen(true); });
 })();
