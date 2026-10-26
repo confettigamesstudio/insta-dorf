@@ -173,7 +173,6 @@
     (M.orte || []).forEach(function (o) { aufKarte[o.dorf] = 1; });
     M.haeuser.forEach(function (o) { if (o.dorf) aufKarte[o.dorf] = 1; });
     ohneOrt = (D.dorf || []).filter(function (d) { return !aufKarte[d.id]; });
-    $("dorf-mehr").hidden = !ohneOrt.length;
     K.w = M.breite; K.h = M.hoehe;
     $("karte-innen").style.width = K.w + "px"; $("karte-innen").style.height = K.h + "px";
   }
@@ -328,7 +327,7 @@
     $("karte-plus").addEventListener("click", function (e) { e.stopPropagation(); kZoom(1.5); });
     $("karte-minus").addEventListener("click", function (e) { e.stopPropagation(); kZoom(1 / 1.5); });
     $("karte-reset").addEventListener("click", function (e) { e.stopPropagation(); kAnpassen(); });
-    $("dorf-mehr").addEventListener("click", dorfMehr);
+    // Thomas 26.10.2026: no "Mehr über das Dorf" button on the map any more (dorfMehr stays unused)
     window.addEventListener("resize", function () { if (!$("panel-karte").hidden) kAnpassen(); });
   })();
 
