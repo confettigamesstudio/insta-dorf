@@ -475,18 +475,14 @@
         $("zv-video-link").href = v.link; $("zv-video-knopf").href = v.link; $("zv-video-img").src = v.bild;
         $("zv-video-etikett").textContent = v.name + " · Tag " + d.tag;
       }
+      // only summarised, neutral ideas and roles with a count - no names, no comment text (Thomas 26.10.2026)
       if (d.ideen && d.ideen.length) {
-        $("zv-ideen").innerHTML = d.ideen.map(function (i) {
-          return '<li><span class="zv-idee-text">' + esc(i.idee) + '</span><span class="zv-idee-von">von ' + i.von.map(function (n) { return "@" + esc(n); }).join(", ")
-            + (i.likes ? " · " + i.likes + " Likes" : "") + "</span></li>";
-        }).join("");
+        $("zv-ideen").innerHTML = d.ideen.map(function (i) { return '<li><span class="zv-idee-text">' + esc(i.idee) + '</span><span class="zv-anzahl">' + i.anzahl + "×</span></li>"; }).join("");
         $("zv-ideen-block").hidden = false;
-      } else $("zv-ideen").hidden = true;
-      $("zv-ideen-stand").textContent = d.kommentare + (d.kommentare === 1 ? " Kommentar" : " Kommentare") + " bisher, Stand " + d.stand + ".";
+      }
       if (d.rollen && d.rollen.length) {
-        $("zv-rollen").innerHTML = d.rollen.map(function (r) { return "<li>" + esc(r.rolle) + (r.anzahl > 1 ? "<small>× " + r.anzahl + "</small>" : "") + "</li>"; }).join("");
+        $("zv-rollen").innerHTML = d.rollen.map(function (r) { return "<li>" + esc(r.rolle) + '<span class="zv-anzahl">' + r.anzahl + "</span></li>"; }).join("");
         $("zv-rollen-block").hidden = false;
-        $("zv-ideen-block").hidden = false;
       }
     }).catch(function () { $("zv-einzug").textContent = "–"; geladen = false; });
   }

@@ -337,12 +337,11 @@ html.welt-zv .kopf:not(.zv-kopf), html.welt-zv .reiter-leiste, html.welt-zv main
 .zv-schritte { margin: 0; padding-left: 1.4em; display: grid; gap: 8px; }
 .zv-schritte a { color: var(--gruen-tief); font-weight: 700; }
 .zv-ideen { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: idee; }
-.zv-ideen li { counter-increment: idee; display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; background: var(--flaeche-2); border-radius: 14px; padding: 12px 14px; }
-.zv-ideen li::before { content: counter(idee); grid-row: span 2; align-self: center; font: 700 22px var(--display); color: var(--rot); min-width: 1.2em; text-align: center; }
+.zv-ideen li { counter-increment: idee; display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; background: var(--flaeche-2); border-radius: 14px; padding: 12px 14px; }
+.zv-ideen li::before { content: counter(idee); font: 700 22px var(--display); color: var(--rot); min-width: 1.2em; text-align: center; }
 .zv-idee-text { font-weight: 700; }
-.zv-idee-von { color: var(--leise); font-size: 14px; overflow-wrap: anywhere; }
+.zv-anzahl { color: var(--leise); font-weight: 700; font-variant-numeric: tabular-nums; }
 .zv-rollen { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
-.zv-rollen li { border: 2px solid var(--linie); border-radius: 999px; padding: 4px 12px; font-weight: 700; font-size: 14px; }
-.zv-rollen small { color: var(--leise); margin-left: 4px; }
+.zv-rollen li { display: inline-flex; gap: 8px; border: 2px solid var(--linie); border-radius: 999px; padding: 4px 12px; font-weight: 700; font-size: 15px; }
 .zv-patreon { margin-block: 0; }
 .zv-patreon .knopf { text-decoration: none; background: var(--gold); color: #3a2a00; }
