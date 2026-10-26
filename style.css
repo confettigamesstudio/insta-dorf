@@ -406,3 +406,4 @@ button.zv-karte:hover, button.zv-karte:focus-visible { border-color: #9a3b2a; ou
 .zv-rezept-info dt { color: var(--leise); min-width: 6.5em; }
 .zv-rezept-info dd { margin: 0; font-weight: 700; }
 @media (max-width: 520px) { .zv-leiste .reiter { flex-wrap: nowrap; justify-content: center; } .zv-leiste .reiter-knopf { font-size: 15px; padding: 10px 8px 8px; } }
+.zv-rezept-kopf h3 { font-size: 22px; word-break: normal; overflow-wrap: normal; hyphens: auto; -webkit-hyphens: auto; }
