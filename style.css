@@ -407,3 +407,9 @@ button.zv-karte:hover, button.zv-karte:focus-visible { border-color: #9a3b2a; ou
 .zv-rezept-info dd { margin: 0; font-weight: 700; }
 @media (max-width: 520px) { .zv-leiste .reiter { flex-wrap: nowrap; justify-content: center; } .zv-leiste .reiter-knopf { font-size: 15px; padding: 10px 8px 8px; } }
 .zv-rezept-kopf h3 { font-size: 22px; word-break: normal; overflow-wrap: normal; hyphens: auto; -webkit-hyphens: auto; }
+/* Zombieville "Spielen" tab: greyed out until the game is released (Thomas 26.10.2026) */
+.zv-leiste .reiter-knopf.zv-bald { color: var(--leise); opacity: .55; cursor: not-allowed; }
+.zv-bald-marke { display: inline-block; font: 700 10px var(--body); text-transform: uppercase; letter-spacing: .04em; border: 1px solid currentColor; border-radius: 999px; padding: 1px 6px; vertical-align: 3px; margin-left: 2px; }
+.zv-spielen-hinweis { margin: 0; padding-block: 8px; text-align: center; font-weight: 700; color: var(--leise); }
+@media (max-width: 520px) { .zv-leiste .reiter { overflow-x: auto; justify-content: flex-start; } .zv-leiste .reiter-knopf { font-size: 14px; padding: 10px 7px 8px; } .zv-bald-marke { font-size: 9px; padding: 0 4px; } }
+@media (max-width: 520px) { .zv-leiste .reiter-knopf.zv-bald { padding-top: 4px; padding-bottom: 4px; line-height: 1.1; } .zv-bald .zv-bald-marke { display: block; margin: 2px 0 0; vertical-align: 0; } }

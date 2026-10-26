@@ -35,7 +35,7 @@
     return 'background-image:url(' + A.datei + ');background-size:' + (A.spalten * px) + "px auto;background-position:-" + (col * px + (ox || 0)) + "px -" + (row * px + (oy || 0)) + "px";
   }
   function tagName(t) { return t === 0 ? "Der Anfang" : "Tag " + t; }
-  function supKlasse(b, pre) { return b.patreon ? " " + pre + (b.patreon >= 3 ? " " + pre + "3" : "") : ""; }
+  function supKlasse(b, pre) { var t = b.patreon || (b.krone ? 2 : 0); return t ? " " + pre + (t >= 3 ? " " + pre + "3" : "") : ""; }   // b.krone: the wedding couple on its wedding day
 
   function laden() {
     fetch("daten/dorf.json", { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
@@ -114,7 +114,7 @@
       var neu = b.einzug === D.tag && !b.wartet;
       var cls = "eintrag" + (neu ? " neu" : "") + (b.wartet ? " warte" : "") + supKlasse(b, "sup");
       var marke = b.patreon ? '<span class="marke sup' + (b.patreon >= 3 ? " sup3" : "") + '">Supporter</span>'
-        : b.wartet ? '<span class="marke warte">zieht bald ein</span>' : !b.lebt ? '<span class="marke tot">verstorben</span>' : neu ? '<span class="marke neu">neu</span>' : "";
+        : b.krone ? '<span class="marke sup">Hochzeit</span>' : b.wartet ? '<span class="marke warte">zieht bald ein</span>' : !b.lebt ? '<span class="marke tot">verstorben</span>' : neu ? '<span class="marke neu">neu</span>' : "";
       return '<li><button type="button" class="' + cls + '" data-name="' + esc(b.name) + '"><span class="avatar" style="' + figur(b, 80, 16, 2) + '"></span>'
         + '<span class="txt"><span class="n">' + esc(b.name) + marke + '</span><span class="b">' + esc(b.beruf) + "</span></span></button></li>";
     }).join("");
@@ -125,7 +125,7 @@
   // by profession (Thomas 24.10.2026): the groups (Gesundheit, Sicherheit ...) fold open, inside each profession with its people
   function kurz(b) {
     return '<li><button type="button" class="eintrag' + supKlasse(b, "sup") + '" data-name="' + esc(b.name) + '"><span class="avatar" style="' + figur(b, 80, 16, 2) + '"></span>'
-      + '<span class="txt"><span class="n">' + esc(b.name) + (b.patreon ? '<span class="marke sup' + (b.patreon >= 3 ? " sup3" : "") + '">Supporter</span>' : "") + '</span><span class="b">' + esc(b.beruf) + "</span></span></button></li>";
+      + '<span class="txt"><span class="n">' + esc(b.name) + (b.patreon ? '<span class="marke sup' + (b.patreon >= 3 ? " sup3" : "") + '">Supporter</span>' : b.krone ? '<span class="marke sup">Hochzeit</span>' : "") + '</span><span class="b">' + esc(b.beruf) + "</span></span></button></li>";
   }
   function nachBeruf(treffer, q) {
     return (D.kategorien || ["Sonstige"]).map(function (k) {
@@ -373,6 +373,7 @@
     var h = '<div class="p-bild' + supKlasse(b, "sup") + '" role="img" aria-label="So sieht ' + esc(b.name) + ' im Dorf aus" style="' + figur(b, 160, 0, 0) + '"></div>';
     h += '<div class="p-kopf"><h2 id="p-name">' + esc(b.name) + '</h2><span class="beruf">' + esc(b.beruf) + "</span>";
     if (b.patreon) h += '<span class="sup-zeile">♛ Supporter · ' + esc(b.supporter) + "</span>";
+    if (b.krone) h += '<span class="sup-zeile">♛ ' + esc(b.krone) + "</span>";
     h += '<span class="ort">' + (b.wartet ? "Zieht beim nächsten Tag ein" : "Eingezogen an Tag " + b.einzug + (b.viertel ? ", wohnt " + esc(b.viertel) : "")) + "</span></div>";
     var mehr = [["Arbeit", b.taetigkeit], ["Wohnt in", b.haus], ["Abends meist", b.abend], ["Hilft auch bei", b.nebenrolle]].filter(function (x) { return x[1]; });
     if (mehr.length) h += '<dl class="p-mehr">' + mehr.map(function (x) { return "<div><dt>" + x[0] + "</dt><dd>" + esc(x[1]) + "</dd></div>"; }).join("") + "</dl>";
@@ -510,6 +511,12 @@
     }).then(function (f) { st.hidden = true; if ($("zv-panel-farm").hidden) f.zeigen(false); return f; })
       .catch(function () { st.textContent = "Die 3D-Farm läuft auf diesem Gerät leider nicht."; return null; });
   }
+  // "Spielen" (Thomas 26.10.2026): greyed out, Coming Soon - no link to the game yet, a tap only shows a short note
+  var spHinweis = null;
+  $("zv-tab-spielen").addEventListener("click", function () {
+    $("zv-spielen-hinweis").hidden = false; clearTimeout(spHinweis);
+    spHinweis = setTimeout(function () { $("zv-spielen-hinweis").hidden = true; }, 3500);
+  });
   document.querySelectorAll("[data-zvtab]").forEach(function (b) {
     b.addEventListener("click", function () { zvTab(b.getAttribute("data-zvtab"), true); });
   });
