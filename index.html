@@ -10,12 +10,38 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Das Instagram-Dorf: die Geschichte jedes Tages, alle Bewohner mit Profil und das Lager.">
 <link rel="stylesheet" href="schrift/schriften.css">
-<link rel="stylesheet" href="style.css?v=21b36f61">
+<link rel="stylesheet" href="style.css?v=b4c4f43a">
+
+<section class="welten" id="welten" aria-labelledby="welten-titel" hidden>
+  <div class="welten-innen">
+    <p class="welten-kicker">Reisende Gedanken</p>
+    <h1 id="welten-titel">In welche Welt möchtest du?</h1>
+    <div class="welten-wahl">
+      <button type="button" class="welt welt-dorf" id="welt-dorf" data-umami-event="Welt" data-umami-event-welt="Insta-Dorf">
+        <span class="welt-bild" aria-hidden="true"></span>
+        <span class="welt-text">
+          <span class="welt-logo">Insta-Dorf</span>
+          <span class="welt-unter">Das Instagram-Dorf: jeder Kommentar mit einem Beruf zieht ein. Story, Bewohner, Karte und 3D-Dorf.</span>
+          <span class="welt-los">Ins Dorf →</span>
+        </span>
+      </button>
+      <div class="welt welt-zombie" aria-disabled="true">
+        <span class="welt-bild" aria-hidden="true"><span class="zombie-mond"></span><span class="zombie-hand">🧟</span></span>
+        <span class="welt-text">
+          <span class="welt-logo">Zombie-Apokalypse</span>
+          <span class="welt-unter">Eine neue Welt. Überlebst du sie?</span>
+          <span class="welt-bald">Coming Soon</span>
+        </span>
+      </div>
+    </div>
+  </div>
+</section>
 
 <header class="kopf">
   <div class="kopf-bild" aria-hidden="true"></div>
   <div class="huelle kopf-innen">
     <p class="kicker" id="kicker">Das Instagram-Dorf</p>
+    <button type="button" class="welten-zurueck" id="welten-zurueck">← Welt wählen</button>
     <h1>Insta-Dorf</h1>
     <p class="unter">Jeder Kommentar mit einem Beruf zieht ein. Hier steht, was im Dorf passiert, wer dort wohnt und was im Lager liegt.</p>
     <a class="patreon-knopf" href="https://www.patreon.com/ReisendeGedanken" target="_blank" rel="noopener" data-umami-event="Patreon" data-umami-event-ort="oben">Unterstütze das Dorf auf Patreon</a>
@@ -135,7 +161,7 @@
 </footer>
 
 <script defer src="https://cloud.umami.is/script.js" data-website-id="80cb14ef-1eda-40cc-8519-9f694c1fff23" data-domains="instadorf.de"></script>
-<script src="app.js?v=57ed9a4a"></script>
+<script src="app.js?v=ecd8967f"></script>
 
 </body>
 </html>
