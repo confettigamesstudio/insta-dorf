@@ -442,15 +442,11 @@
   laden();
 })();
 
-/* World chooser (Thomas 26.10.2026): shown on entry; a link with #name/#tab goes straight into the village */
+/* World chooser (Thomas 26.10.2026): ALWAYS shown when the page opens; the world bar switches back */
 (function () {
   var w = document.getElementById("welten"); if (!w) return;
-  var gewaehlt = false; try { gewaehlt = sessionStorage.getItem("welt") === "dorf"; } catch (e) {}
-  function zeigen(an) { w.hidden = !an; document.documentElement.style.overflow = an ? "hidden" : ""; }
-  zeigen(!location.hash && !gewaehlt);
-  document.getElementById("welt-dorf").addEventListener("click", function () {
-    try { sessionStorage.setItem("welt", "dorf"); } catch (e) {}
-    zeigen(false); window.scrollTo(0, 0);
-  });
-  var z = document.getElementById("welten-zurueck"); if (z) z.addEventListener("click", function () { zeigen(true); });
+  function zeigen(an) { w.hidden = !an; document.documentElement.style.overflow = an ? "hidden" : ""; if (an) w.scrollTop = 0; }
+  zeigen(true);
+  document.getElementById("welt-dorf").addEventListener("click", function () { zeigen(false); window.scrollTo(0, 0); });
+  ["welten-zurueck", "welt-wechseln-zombie"].forEach(function (id) { var b = document.getElementById(id); if (b) b.addEventListener("click", function () { zeigen(true); }); });
 })();

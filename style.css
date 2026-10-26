@@ -302,4 +302,15 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .welt-los { justify-self: start; margin-top: 6px; background: #3f8a3a; color: #fff; font: 700 16px var(--display); padding: 10px 18px; border-radius: 999px; }
 .welt-bald { justify-self: start; margin-top: 6px; background: #3a2b2b; color: #ffb3a1; font: 700 15px var(--display); padding: 9px 16px; border-radius: 999px; letter-spacing: .04em; }
 .welt-zombie { cursor: not-allowed; opacity: .92; }
-.welten-zurueck { background: rgba(0, 0, 0, .35); color: #fff; border: 0; border-radius: 999px; padding: 4px 12px; font: 600 13px var(--display); cursor: pointer; margin-bottom: 6px; }
+
+/* the world bar above the village header: always visible, switch worlds */
+.weltleiste { background: #151d14; border-bottom: 1px solid rgba(255, 255, 255, .08); padding-top: env(safe-area-inset-top, 0px); }
+.weltleiste-innen { display: flex; align-items: center; gap: 8px; padding-block: 8px; overflow-x: auto; }
+.weltleiste-titel { color: #9fb397; font: 600 13px var(--display); margin-right: 2px; }
+.weltknopf { flex: 0 0 auto; border: 1px solid rgba(255, 255, 255, .14); background: transparent; color: #e6eedf; border-radius: 999px; padding: 6px 14px;
+  font: 600 14px var(--display); cursor: pointer; }
+.weltknopf small { font-size: 11px; color: #ffb3a1; margin-left: 4px; }
+.weltknopf.aktiv { background: #3f8a3a; border-color: #3f8a3a; color: #fff; cursor: default; }
+.weltknopf:hover:not(.aktiv), .weltknopf:focus-visible { border-color: #f2c04a; outline: none; }
+.weltknopf-alle { margin-left: auto; }
+@media (max-width: 520px) { .weltleiste-titel { display: none; } .weltknopf { padding: 6px 11px; font-size: 13px; } }
