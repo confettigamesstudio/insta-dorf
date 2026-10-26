@@ -277,7 +277,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .p-mehr dt { font-size: 12px; opacity: .7; margin: 0; }
 .p-mehr dd { margin: 2px 0 0; font-weight: 600; }
 
-/* World chooser on entry (Thomas 26.10.2026): Insta-Dorf left, Zombie-Apokalypse (coming soon) right */
+/* World chooser on entry (Thomas 26.10.2026): Insta-Dorf left, Zombieville (coming soon) right */
 .welten { position: fixed; inset: 0; z-index: 100; overflow-y: auto; background: radial-gradient(120% 90% at 50% 0%, #2a3a26 0%, #10160f 70%);
   padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); padding-block: calc(env(safe-area-inset-top, 0px) + 32px) 32px; }
 .welten-innen { max-width: 1040px; margin: 0 auto; display: grid; gap: 20px; }
@@ -291,7 +291,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .welt-dorf:hover, .welt-dorf:focus-visible { transform: translateY(-3px); outline-color: #f2c04a; }
 .welt-bild { display: block; aspect-ratio: 16 / 10; background: center / cover no-repeat; }
 .welt-dorf .welt-bild { background-image: url("daten/kopf.webp"); }
-.welt-zombie .welt-bild { position: relative; background: linear-gradient(180deg, #0b0f14 0%, #1b2a1a 70%, #263a22 100%); filter: saturate(.8); }
+.welt-zombie .welt-bild { background-image: url("bilder/zombieville.webp"); }
 .zombie-mond { position: absolute; right: 16%; top: 16%; width: 22%; aspect-ratio: 1; border-radius: 50%; background: #e9e4c8; box-shadow: 0 0 60px rgba(233, 228, 200, .45); }
 .zombie-hand { position: absolute; left: 50%; bottom: 6%; transform: translateX(-50%); font-size: clamp(64px, 12vw, 110px); filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .6)); }
 .welt-text { display: grid; gap: 8px; padding: 18px 20px 22px; align-content: start; }
