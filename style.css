@@ -345,3 +345,31 @@ html.welt-zv .kopf:not(.zv-kopf), html.welt-zv .reiter-leiste, html.welt-zv main
 .zv-rollen li { display: inline-flex; gap: 8px; border: 2px solid var(--linie); border-radius: 999px; padding: 4px 12px; font-weight: 700; font-size: 15px; }
 .zv-patreon { margin-block: 0; }
 .zv-patreon .knopf { text-decoration: none; background: var(--gold); color: #3a2a00; }
+
+/* Zombieville tabs (Thomas 26.10.2026): Übersicht · Farm (3D map) · Lager */
+.zv-leiste { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 6; background: var(--bg); border-bottom: 2px solid var(--linie); }
+.zv-leiste .reiter-knopf[aria-selected="true"] { border-bottom-color: #9a3b2a; }
+.zv-panel { display: grid; gap: 22px; }
+.zv-panel[hidden] { display: none; }
+.zv-farm { position: relative; height: min(68vh, 600px); min-height: 340px; border-radius: 16px; overflow: hidden; background: #c3cfc9; touch-action: none; user-select: none; -webkit-user-select: none; }
+.zv-farm canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+.zv-farm canvas:active { cursor: grabbing; }
+.zv-farm-status { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; padding: 20px; text-align: center; color: #2c3a28; font: 600 16px var(--display); }
+.zv-farm-namen { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.zv-farm-namen[hidden] { display: none; }
+.zv-farm-name { position: absolute; left: 0; top: 0; padding: 3px 9px; border-radius: 999px; background: rgba(20, 26, 18, .78); color: #fff; font: 600 13px var(--display); white-space: nowrap; will-change: transform; }
+.zv-farm-knoepfe { position: absolute; top: 10px; right: 10px; display: flex; gap: 6px; z-index: 2; }
+.zv-farm-knopf { font: 600 13px var(--display); border: 0; border-radius: 999px; padding: 7px 12px; background: rgba(255, 255, 255, .9); color: #22301f; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, .18); }
+.zv-farm-knopf[aria-pressed="false"] { background: rgba(255, 255, 255, .55); color: #5b6b55; }
+.zv-farm-knopf:focus-visible { outline: 3px solid var(--gold); outline-offset: 1px; }
+.zv-lager { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+@media (max-width: 520px) { .zv-lager { grid-template-columns: repeat(2, 1fr); } }
+.zv-ware { display: grid; grid-template-columns: 56px 1fr; grid-template-rows: auto auto; column-gap: 12px; align-items: center; background: var(--flaeche-2); border-radius: 16px; padding: 10px 12px; }
+.zv-ware img, .zv-ware-ohne { grid-row: 1 / 3; width: 56px; height: 56px; object-fit: contain; display: grid; place-items: center; font-size: 34px; }
+.zv-ware-zahl { font: 700 28px/1 var(--display); font-variant-numeric: tabular-nums; align-self: end; }
+.zv-ware-name { font-weight: 700; color: var(--leise); align-self: start; }
+.zv-ware-name small { display: block; font-weight: 600; font-size: 12px; }
+.zv-ware-leer { opacity: .55; }
+.zv-lager-regel { margin: 0; background: #f6e3d6; color: #4a2318; border-radius: 14px; padding: 12px 14px; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .zv-lager-regel { background: #3a221b; color: #f3d6c8; } }
+:root[data-theme="dark"] .zv-lager-regel { background: #3a221b; color: #f3d6c8; }

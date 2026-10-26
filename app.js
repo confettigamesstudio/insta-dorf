@@ -460,7 +460,59 @@
     });
     document.title = z ? "Zombieville" : "Insta-Dorf";
     if (z && !geladen) zvLaden();
+    if (!z) { zvFarmZeigen(false); if (/^#zv-/.test(location.hash)) hashSetzen(""); }
+    else zvTab(tabStart || "uebersicht", false);
+    tabStart = null;
     zeigen(false); window.scrollTo(0, 0);
+  }
+  function hashSetzen(h) { try { history.replaceState(null, "", h ? "#" + h : location.pathname + location.search); } catch (e) { /* preview frame */ } }
+
+  // Zombieville tabs (Thomas 26.10.2026): Übersicht (default), Farm (3D map, only a view), Lager (stock); the tab is kept in the hash (#zv-farm)
+  var ZV_TABS = ["uebersicht", "farm", "lager"], tabStart = null, farm = null;
+  function zvTab(name, merken) {
+    if (ZV_TABS.indexOf(name) < 0) name = "uebersicht";
+    ZV_TABS.forEach(function (t) {
+      $("zv-panel-" + t).hidden = t !== name;
+      $("zv-tab-" + t).setAttribute("aria-selected", t === name ? "true" : "false");
+    });
+    zvFarmZeigen(name === "farm");
+    if (merken) hashSetzen("zv-" + name);
+  }
+  function zvFarmZeigen(an) {
+    if (!an) { if (farm) farm.then(function (f) { if (f) f.zeigen(false); }); return; }
+    if (farm) { farm.then(function (f) { if (f) f.zeigen(true); }); return; }
+    var st = $("zv-farm-status");
+    st.hidden = false;
+    farm = import("./zombieville/farm.js").then(function (mod) {
+      return mod.start($("zv-farm"), function (t) { st.textContent = t; });
+    }).then(function (f) { st.hidden = true; if ($("zv-panel-farm").hidden) f.zeigen(false); return f; })
+      .catch(function () { st.textContent = "Die 3D-Farm läuft auf diesem Gerät leider nicht."; return null; });
+  }
+  document.querySelectorAll("[data-zvtab]").forEach(function (b) {
+    b.addEventListener("click", function () { zvTab(b.getAttribute("data-zvtab"), true); });
+  });
+  $("zv-farm-zurueck").addEventListener("click", function () { if (farm) farm.then(function (f) { if (f) f.zuruecksetzen(); }); });
+  $("zv-farm-namen").addEventListener("click", function () {
+    var an = this.getAttribute("aria-pressed") !== "true";
+    this.setAttribute("aria-pressed", an ? "true" : "false");
+    if (farm) farm.then(function (f) { if (f) f.namen(an); });
+  });
+  // stock: numbers only (Regie.json lager.stand via zombieville.py); icons from the village set where one fits
+  var LAGER = { holz: ["Holz", "ikonen/holz.webp"], essen: ["Essen", "ikonen/mahlzeit.webp"], pilze: ["Pilze", "ikonen/pilze.webp"], beeren: ["Beeren", "ikonen/beeren.webp"],
+    fasern: ["Fasern", "ikonen/hanffaser.webp"], steine: ["Steine", "bilder_zombie/stein.webp"], boegen: ["Bögen", "bilder_zombie/bogen.webp"], pfeile: ["Pfeile", "bilder_zombie/pfeil.webp"] };
+  var ZAHLWORT = { holz: "Holz", essen: "Essen" };
+  function zvLager(l) {
+    if (!l) { $("zv-lager-stand").textContent = "Noch kein Lagerbestand"; return; }
+    $("zv-lager-stand").textContent = "Stand Tag " + l.tag + " · " + l.bewohner + " Bewohner";
+    var html = (l.bestand || []).map(function (b) {
+      var i = LAGER[b.id] || [b.id.charAt(0).toUpperCase() + b.id.slice(1), ""];
+      return '<li class="zv-ware' + (b.anzahl ? "" : " zv-ware-leer") + '">' + (i[1] ? '<img src="' + i[1] + '" alt="" width="56" height="56" loading="lazy">' : '<span class="zv-ware-ohne" aria-hidden="true"></span>') +
+        '<span class="zv-ware-zahl">' + b.anzahl + '</span><span class="zv-ware-name">' + esc(i[0]) + "</span></li>";
+    }).join("");
+    if (l.wasser) html += '<li class="zv-ware zv-ware-wasser"><span class="zv-ware-ohne" aria-hidden="true">💧</span><span class="zv-ware-zahl">∞</span><span class="zv-ware-name">Wasser <small>aus dem ' + esc(String(l.wasser).replace(/\s*\(.*\)/, "")) + "</small></span></li>";
+    $("zv-lager").innerHTML = html;
+    var m = l.mitbringen || {}, teile = Object.keys(m).filter(function (k) { return m[k]; }).map(function (k) { return m[k] + " " + (ZAHLWORT[k] || (LAGER[k] || [k])[0]); });
+    if (teile.length) { $("zv-lager-regel").innerHTML = "<strong>Jeder neue Bewohner bringt " + esc(teile.join(" und ")) + " mit.</strong> Das kommt direkt ins Lager."; $("zv-lager-regel").hidden = false; }
   }
   // Zombieville data: daten/zombieville.json (Tools/Kommentare/zombieville.py) - only what the posted videos and comments show
   function zvLaden() {
@@ -480,13 +532,16 @@
         $("zv-ideen").innerHTML = d.ideen.map(function (i) { return '<li><span class="zv-idee-text">' + esc(i.idee) + '</span><span class="zv-anzahl">' + i.anzahl + "×</span></li>"; }).join("");
         $("zv-ideen-block").hidden = false;
       }
+      zvLager(d.lager);
       if (d.rollen && d.rollen.length) {
         $("zv-rollen").innerHTML = d.rollen.map(function (r) { return "<li>" + esc(r.rolle) + '<span class="zv-anzahl">' + r.anzahl + "</span></li>"; }).join("");
         $("zv-rollen-block").hidden = false;
       }
     }).catch(function () { $("zv-einzug").textContent = "–"; geladen = false; });
   }
-  zeigen(true);
+  // a link straight to a Zombieville tab (#zv-farm) opens it without the world chooser
+  var h = decodeURIComponent(location.hash.slice(1));
+  if (/^zv-/.test(h)) { tabStart = h.slice(3); welt("zombieville"); } else zeigen(true);
   $("welt-dorf").addEventListener("click", function () { welt("dorf"); });
   var wz = $("welt-zombie"); if (wz) wz.addEventListener("click", function () { welt("zombieville"); });
   var bd = $("welt-wechseln-dorf"); if (bd) bd.addEventListener("click", function () { welt("dorf"); });
