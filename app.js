@@ -99,15 +99,18 @@
   // ---------------------------------------------------------------- villagers
   function passt(b, q) {
     if (filter === "supporter" && !b.patreon) return false;
+    if (filter === "krank" && !(b.krank && b.lebt)) return false;
     if (!q) return true;
     return b.name.toLowerCase().indexOf(q) >= 0 || (b.beruf || "").toLowerCase().indexOf(q) >= 0;
   }
   function liste() {
+    var nk = D.bewohner.filter(function (b) { return b.krank && b.lebt; }).length;
+    $("f-krank").textContent = "🤒 Krank · " + nk; $("f-krank").hidden = !nk && filter !== "krank";
     var q = $("suche").value.trim().toLowerCase().replace(/^@/, "");
     var treffer = D.bewohner.filter(function (b) { return passt(b, q); });
     if (q) treffer.sort(function (a, b) { return (b.name.toLowerCase().indexOf(q) === 0) - (a.name.toLowerCase().indexOf(q) === 0); });
     $("treffer").textContent = treffer.length === 0
-      ? (filter === "supporter" ? "Noch keine Supporter. Wer das Dorf unterstützt, bekommt eine Krone und erscheint hier." : "Niemand gefunden. Noch nicht eingezogen? Schreib deinen Beruf unter das neueste Video.")
+      ? (filter === "krank" ? "Gerade ist niemand krank." : filter === "supporter" ? "Noch keine Supporter. Wer das Dorf unterstützt, bekommt eine Krone und erscheint hier." : "Niemand gefunden. Noch nicht eingezogen? Schreib deinen Beruf unter das neueste Video.")
       : treffer.length + " Bewohner";
     if (filter === "beruf") { $("liste").innerHTML = nachBeruf(treffer, q); return; }
     var html = treffer.slice(0, shown).map(function (b) {
@@ -116,7 +119,7 @@
       var marke = b.patreon ? '<span class="marke sup' + (b.patreon >= 3 ? " sup3" : "") + '">Supporter</span>'
         : b.krone ? '<span class="marke sup">Hochzeit</span>' : b.wartet ? '<span class="marke warte">zieht bald ein</span>' : !b.lebt ? '<span class="marke tot">verstorben</span>' : neu ? '<span class="marke neu">neu</span>' : "";
       return '<li><button type="button" class="' + cls + '" data-name="' + esc(b.name) + '"><span class="avatar" style="' + figur(b, 80, 16, 2) + '"></span>'
-        + '<span class="txt"><span class="n">' + esc(b.name) + marke + '</span><span class="b">' + esc(b.beruf) + "</span></span></button></li>";
+        + '<span class="txt"><span class="n">' + esc(b.name) + marke + krankMarke(b) + '</span><span class="b">' + esc(b.beruf) + "</span></span></button></li>";
     }).join("");
     if (treffer.length > shown) html += '<li class="mehr"><button type="button" class="chip" id="mehr">Weitere ' + (treffer.length - shown) + " anzeigen</button></li>";
     $("liste").innerHTML = html;
@@ -125,8 +128,10 @@
   // by profession (Thomas 24.10.2026): the groups (Gesundheit, Sicherheit ...) fold open, inside each profession with its people
   function kurz(b) {
     return '<li><button type="button" class="eintrag' + supKlasse(b, "sup") + '" data-name="' + esc(b.name) + '"><span class="avatar" style="' + figur(b, 80, 16, 2) + '"></span>'
-      + '<span class="txt"><span class="n">' + esc(b.name) + (b.patreon ? '<span class="marke sup' + (b.patreon >= 3 ? " sup3" : "") + '">Supporter</span>' : b.krone ? '<span class="marke sup">Hochzeit</span>' : "") + '</span><span class="b">' + esc(b.beruf) + "</span></span></button></li>";
+      + '<span class="txt"><span class="n">' + esc(b.name) + (b.patreon ? '<span class="marke sup' + (b.patreon >= 3 ? " sup3" : "") + '">Supporter</span>' : b.krone ? '<span class="marke sup">Hochzeit</span>' : "") + krankMarke(b) + '</span><span class="b">' + esc(b.beruf) + "</span></span></button></li>";
   }
+  // sick villagers (Thomas 27.10.2026): small red tag with the illness, only the name of it, no cause
+  function krankMarke(b) { return b.krank && b.lebt ? '<span class="marke krank">🤒 ' + esc(b.krank === true ? "krank" : b.krank) + "</span>" : ""; }
   function nachBeruf(treffer, q) {
     return (D.kategorien || ["Sonstige"]).map(function (k) {
       var leute = treffer.filter(function (b) { return (b.kategorie || "Sonstige") === k; });
