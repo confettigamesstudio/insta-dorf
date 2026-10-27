@@ -590,11 +590,21 @@
       $("zv-ueberlebende").textContent = d.ueberlebende;
       $("zv-einzug-titel").textContent = "Ziehen an " + d.einzugTag + " ein";
       $("zv-einzug").textContent = d.einzug;
-      var v = (d.videos || [])[d.videos.length - 1];
-      if (v) {
-        $("zv-video-link").href = v.link; $("zv-video-knopf").href = v.link; $("zv-video-img").src = v.bild;
-        $("zv-video-etikett").textContent = v.name + " · Tag " + d.tag;
-      }
+      // the first video keeps its block ("So fängt es an"), every later video gets its own block above it, newest first (Thomas 27.10.2026)
+      var vs = d.videos || [], v0 = vs[0];
+      if (v0) { $("zv-video-link").href = v0.link; $("zv-video-knopf").href = v0.link; $("zv-video-img").src = v0.bild; $("zv-video-etikett").textContent = v0.name + " · Tag 0"; }
+      var erst = $("zv-video-link").closest("section");
+      document.querySelectorAll(".zv-video-neu").forEach(function (x) { x.remove(); });
+      vs.slice(1).forEach(function (v) {
+        var t = (v.titel.match(/Tag (\d+)/) || [])[1] || "";
+        var sec = document.createElement("section"); sec.className = "zv-block zv-video zv-video-neu";
+        sec.innerHTML = '<a class="zv-video-bild" href="' + esc(v.link) + '" target="_blank" rel="noopener" data-umami-event="Zombieville Video"><img src="' + esc(v.bild) + '" alt="' + esc(v.titel) + '" width="540" height="960" loading="lazy"></a>'
+          + '<div class="zv-video-text"><p class="etikett">' + esc(v.name) + (t ? " · Tag " + t : "") + "</p><h2>" + (t === "1" ? "Der erste Tag im Camp" : "Tag " + esc(t) + " im Camp") + "</h2>"
+          + "<p>" + (t === "1" ? "Die ersten Überlebenden aus euren Kommentaren ziehen ein. Was dabei passiert, siehst du im Video." : "Wie es im Camp weitergeht, siehst du im Video.") + "</p>"
+          + '<a class="knopf zv-knopf" href="' + esc(v.link) + '" target="_blank" rel="noopener" data-umami-event="Zombieville Video">Video auf Instagram ansehen</a></div>';
+        erst.parentNode.insertBefore(sec, erst);
+        erst = sec;
+      });
       // only summarised, neutral ideas and roles with a count - no names, no comment text (Thomas 26.10.2026)
       if (d.ideen && d.ideen.length) {
         $("zv-ideen").innerHTML = d.ideen.map(function (i) { return '<li><span class="zv-idee-text">' + esc(i.idee) + '</span><span class="zv-anzahl">' + i.anzahl + "×</span></li>"; }).join("");
