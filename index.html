@@ -8,9 +8,9 @@
 <body>
 
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Das Instagram-Dorf: die Geschichte jedes Tages, alle Bewohner mit Profil und das Lager.">
+<meta name="description" content="Das Instagram-Dorf: die Geschichte jedes Tages, die Karte, das 3D-Dorf und das Lager.">
 <link rel="stylesheet" href="schrift/schriften.css">
-<link rel="stylesheet" href="style.css?v=1add15f3">
+<link rel="stylesheet" href="style.css?v=12c9d6ca">
 
 <section class="welten" id="welten" aria-labelledby="welten-titel" hidden>
   <div class="welten-innen">
@@ -21,7 +21,7 @@
         <span class="welt-bild" aria-hidden="true"></span>
         <span class="welt-text">
           <span class="welt-logo">Insta-Dorf</span>
-          <span class="welt-unter">Das Instagram-Dorf: jeder Kommentar mit einem Beruf zieht ein. Story, Bewohner, Karte und 3D-Dorf.</span>
+          <span class="welt-unter">Das Instagram-Dorf: jeder Kommentar mit einem Beruf zieht ein. Story, Karte, 3D-Dorf und Lager.</span>
           <span class="welt-los">Ins Dorf →</span>
         </span>
       </button>
@@ -64,24 +64,26 @@
   <nav class="zv-leiste" aria-label="Bereiche in Zombieville">
     <div class="huelle reiter" role="tablist">
       <button type="button" role="tab" class="reiter-knopf" id="zv-tab-uebersicht" data-zvtab="uebersicht" aria-controls="zv-panel-uebersicht" aria-selected="true" data-umami-event="Zombieville Reiter" data-umami-event-reiter="Übersicht">Übersicht</button>
+      <button type="button" role="tab" class="reiter-knopf" id="zv-tab-story" data-zvtab="story" aria-controls="zv-panel-story" aria-selected="false" data-umami-event="Zombieville Reiter" data-umami-event-reiter="Story">Story</button>
       <button type="button" role="tab" class="reiter-knopf" id="zv-tab-farm" data-zvtab="farm" aria-controls="zv-panel-farm" aria-selected="false" data-umami-event="Zombieville Reiter" data-umami-event-reiter="Farm">Farm</button>
       <button type="button" role="tab" class="reiter-knopf" id="zv-tab-lager" data-zvtab="lager" aria-controls="zv-panel-lager" aria-selected="false" data-umami-event="Zombieville Reiter" data-umami-event-reiter="Lager">Lager</button>
+      <!-- Crafting tab hidden (Thomas 28.10.2026: comes into the game later); panel + code stay, put this button back to show it again
       <button type="button" role="tab" class="reiter-knopf" id="zv-tab-crafting" data-zvtab="crafting" aria-controls="zv-panel-crafting" aria-selected="false" data-umami-event="Zombieville Reiter" data-umami-event-reiter="Crafting">Crafting</button>
+      -->
       <button type="button" class="reiter-knopf zv-bald" id="zv-tab-spielen" aria-disabled="true" aria-describedby="zv-spielen-hinweis" data-umami-event="Zombieville Reiter" data-umami-event-reiter="Spielen (bald)">Spielen <span class="zv-bald-marke">Coming Soon</span></button>
     </div>
     <p class="huelle zv-spielen-hinweis" id="zv-spielen-hinweis" role="status" hidden>Bald kannst du hier selbst im Camp spielen.</p>
   </nav>
   <main class="huelle zv-main">
     <div class="zv-panel" id="zv-panel-uebersicht" role="tabpanel" aria-labelledby="zv-tab-uebersicht">
-    <section class="zv-block zv-video" aria-labelledby="zv-video-titel">
-      <a class="zv-video-bild" id="zv-video-link" href="https://www.instagram.com/p/De9R926g-bM/" target="_blank" rel="noopener" data-umami-event="Zombieville Video">
-        <img id="zv-video-img" src="bilder_zombie/video0.webp" alt="Zombieville Tag 0: das Camp-Tor, dahinter die Zombies" width="540" height="960" loading="lazy">
-      </a>
-      <div class="zv-video-text">
-        <p class="etikett" id="zv-video-etikett">Video 0 · Tag 0</p>
-        <h2 id="zv-video-titel">So fängt es an</h2>
-        <p>Ein Camp mit Zaun und Tor, draußen auf der Straße die Zombies. Noch wohnt niemand hier – ab Tag 1 ziehen die ersten Überlebenden aus den Kommentaren ein.</p>
-        <a class="knopf zv-knopf" id="zv-video-knopf" href="https://www.instagram.com/p/De9R926g-bM/" target="_blank" rel="noopener" data-umami-event="Zombieville Video">Video auf Instagram ansehen</a>
+    <!-- no Instagram video embeds/links any more (Thomas 28.10.2026: they only pull the view numbers down); the newest story day instead -->
+    <section class="zv-block zv-neu" id="zv-neu" aria-labelledby="zv-neu-titel" hidden>
+      <button type="button" class="zv-neu-bild" id="zv-neu-bild" data-zvgehe="story" aria-label="Zur Story"></button>
+      <div class="zv-neu-text">
+        <p class="etikett" id="zv-neu-etikett">Die Story</p>
+        <h2 id="zv-neu-titel">Was bisher geschah</h2>
+        <p id="zv-neu-anfang"></p>
+        <button type="button" class="knopf zv-knopf" data-zvgehe="story">Ganze Story lesen</button>
       </div>
     </section>
 
@@ -117,6 +119,12 @@
       <h2 id="zv-rollen-titel">So wollt ihr helfen</h2>
       <ul class="zv-rollen" id="zv-rollen"></ul>
     </section>
+    </div>
+
+    <div class="zv-panel" id="zv-panel-story" role="tabpanel" aria-labelledby="zv-tab-story" hidden>
+      <div class="tage zv-tage" id="zv-tage" role="group" aria-label="Tag auswählen"></div>
+      <div id="zv-story-inhalt"><p class="hinweis-klein">Lade die Story …</p></div>
+      <button type="button" class="knopf zv-knopf zv-komplett" id="zv-komplett" hidden>Ganze Geschichte lesen</button>
     </div>
 
     <div class="zv-panel" id="zv-panel-farm" role="tabpanel" aria-labelledby="zv-tab-farm" hidden>
@@ -165,7 +173,7 @@
   <div class="huelle kopf-innen">
     <p class="kicker" id="kicker">Das Instagram-Dorf</p>
     <h1>Insta-Dorf</h1>
-    <p class="unter">Jeder Kommentar mit einem Beruf zieht ein. Hier steht, was im Dorf passiert, wer dort wohnt und was im Lager liegt.</p>
+    <p class="unter">Jeder Kommentar mit einem Beruf zieht ein. Hier steht, was im Dorf passiert, wie es aussieht und was im Lager liegt.</p>
     <a class="patreon-knopf" href="https://www.patreon.com/ReisendeGedanken" target="_blank" rel="noopener" data-umami-event="Patreon" data-umami-event-ort="oben">Unterstütze das Dorf auf Patreon</a>
     <dl class="zahlen">
       <div><dt>Einwohner</dt><dd id="z-einwohner">…</dd></div>
@@ -178,7 +186,6 @@
 <nav class="reiter-leiste" aria-label="Bereiche">
   <div class="huelle reiter" role="tablist">
     <button type="button" role="tab" class="reiter-knopf" id="tab-story" data-tab="story" aria-selected="true">Die Story</button>
-    <button type="button" role="tab" class="reiter-knopf" id="tab-bewohner" data-tab="bewohner" aria-selected="false">Dorfbewohner</button>
     <button type="button" role="tab" class="reiter-knopf" id="tab-lager" data-tab="lager" aria-selected="false">Lager</button>
     <button type="button" role="tab" class="reiter-knopf" id="tab-wuensche" data-tab="wuensche" aria-selected="false">Eure Wünsche</button>
     <button type="button" role="tab" class="reiter-knopf" id="tab-karte" data-tab="karte" aria-selected="false">Karte</button>
@@ -208,21 +215,6 @@
         <button type="button" id="karte-reset" aria-label="Ganze Karte zeigen">⤢</button>
       </div>
     </div>
-  </section>
-
-  <section id="panel-bewohner" class="panel" role="tabpanel" aria-labelledby="tab-bewohner" hidden>
-    <div class="suchleiste">
-      <label for="suche" class="sr">Namen oder Beruf suchen</label>
-      <input id="suche" type="search" placeholder="Deinen Insta-Namen oder einen Beruf suchen" autocomplete="off" spellcheck="false">
-      <div class="filter" role="group" aria-label="Filter">
-        <button type="button" class="chip aktiv" data-filter="alle" id="f-alle">Alle</button>
-        <button type="button" class="chip" data-filter="beruf" id="f-beruf">Nach Beruf</button>
-        <button type="button" class="chip" data-filter="supporter" id="f-supporter">Supporter</button>
-        <button type="button" class="chip" data-filter="krank" id="f-krank" hidden>🤒 Krank</button>
-      </div>
-    </div>
-    <p class="treffer" id="treffer" aria-live="polite"></p>
-    <ul class="liste" id="liste"></ul>
   </section>
 
   <section id="panel-wuensche" class="panel" role="tabpanel" aria-labelledby="tab-wuensche" hidden>
@@ -278,11 +270,6 @@
   <button type="button" class="zu" id="pop-zu" aria-label="Schließen">×</button>
   <div id="pop-inhalt"></div>
 </aside>
-<div class="profil-hintergrund" id="profil-hg" hidden></div>
-<aside class="profil" id="profil" hidden aria-modal="true" role="dialog" aria-labelledby="p-name">
-  <button type="button" class="zu" id="profil-zu" aria-label="Profil schließen">×</button>
-  <div id="profil-inhalt"></div>
-</aside>
 
 <footer class="fuss huelle">
   <p class="fuss-links"><a href="impressum.html">Impressum</a><a href="datenschutz.html">Datenschutz</a></p>
@@ -290,7 +277,7 @@
 
 <script type="importmap">{ "imports": { "three": "./lib/three.module.min.js" } }</script>
 <script defer src="https://cloud.umami.is/script.js" data-website-id="80cb14ef-1eda-40cc-8519-9f694c1fff23" data-domains="instadorf.de"></script>
-<script src="app.js?v=4c9858f3"></script>
+<script src="app.js?v=3460a0ff"></script>
 
 </body>
 </html>

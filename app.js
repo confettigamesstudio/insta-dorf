@@ -1,14 +1,14 @@
-// Das Instagram-Dorf: tabs Story / Dorfbewohner / Lager / Eure Wünsche / Karte / Unterstuetzen (the old "Dorf" tab lives on the map since 26.10.2026), a profile per name. Data: daten/dorf.json (built by Webseite/bauen.py).
+// Das Instagram-Dorf: tabs Story / Lager / Eure Wünsche / Karte / Unterstuetzen (the old "Dorf" tab lives on the map since 26.10.2026).
+// No resident list, no profiles (Thomas 28.10.2026, privacy): the tab, search, filters and profile cards are gone, names are never links. Data: daten/dorf.json (built by Webseite/bauen.py).
 (function () {
   "use strict";
-  var D = null, byName = {}, nameRe = null, filter = "alle", shown = 120, tag = null, komplett = false;
+  var D = null, tag = null, komplett = false;
   var $ = function (id) { return document.getElementById(id); };
   var SCHILDER = { dorfplatz: "Marktplatz", kirche: "Kirche", theater: "Theater", lager: "Lager", lagerfeuer: "Lagerfeuer", schule: "Schule",
     krankenhaus: "Krankenhaus", muehle: "Wassermühle", militaer: "Militärbasis", forschung: "Forschung", schwimmbad: "Heiße Quellen", acker: "Acker",
     gemuesegarten: "Gemüsegarten", restaurant: "Restaurant", leberkaese: "Leberkäse", doenerladen: "Döner",
     bauernhof: "Bauernhof", koppel: "Koppel", windmuehle: "Windmühle", fischer: "Fischer", wald: "Wald" };
-  var TABS = ["story", "bewohner", "lager", "wuensche", "karte", "unterstuetzen"];
-  var WERTE = [["saettigung", "Satt"], ["durst", "Getrunken"], ["waerme", "Warm"], ["energie", "Energie"], ["gesundheit", "Gesundheit"], ["glaube", "Glaube"]];
+  var TABS = ["story", "lager", "wuensche", "karte", "unterstuetzen"];
   var GRUPPEN = [
     ["Essen", ["Brot", "Fisch", "Fleisch", "Beeren", "Pilze", "Gemüse", "Milch", "Käse", "Eier", "Honig", "Obst", "Suppe", "Leberkäse"]],
     ["Zutaten", ["Weizen", "Mehl", "Kräuter", "Hanfsamen", "Salz", "Zucker"]],
@@ -17,35 +17,18 @@
   ];
 
   // click statistics (Umami, cookieless; only on instadorf.de, where the script is loaded)
-  var suchTimer = null;
   function zaehlen(name, daten) { try { if (window.umami && window.umami.track) window.umami.track(name, daten || {}); } catch (e) { /* never break the page */ } }
 
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
-  function link(n) { return '<button type="button" class="name-link" data-name="' + esc(n) + '">' + esc(n) + "</button>"; }
-  function verlinken(text) {
-    var t = esc(text).replace(/@([\w.]+)/g, function (m, n) { return byName[n] ? "\u0000" + n + "\u0001" : esc(n); });
-    if (nameRe) t = t.replace(nameRe, function (m, pre, n) { return pre + "\u0000" + n + "\u0001"; });
-    return t.replace(/\u0000([^\u0001]+)\u0001/g, function (m, n) { return link(n); });
-  }
-  // a figure from the portrait atlas; px = shown tile size, ox/oy = extra shift (to zoom on the head in the list)
-  function figur(b, px, ox, oy) {
-    var A = D.atlas;
-    if (!A || b.bild == null || b.bild < 0) return "";
-    var col = b.bild % A.spalten, row = Math.floor(b.bild / A.spalten), rows = Math.ceil(D.bewohner.length / A.spalten);
-    return 'background-image:url(' + A.datei + ');background-size:' + (A.spalten * px) + "px auto;background-position:-" + (col * px + (ox || 0)) + "px -" + (row * px + (oy || 0)) + "px";
-  }
+  // names in texts stay plain text (no profiles since 28.10.2026): "@name" -> "name", nothing clickable
+  function verlinken(text) { return esc(text).replace(/@([\w.]+)/g, "$1"); }
   function tagName(t) { return t === 0 ? "Der Anfang" : "Tag " + t; }
-  function supKlasse(b, pre) { var t = b.patreon || (b.krone ? 2 : 0); return t ? " " + pre + (t >= 3 ? " " + pre + "3" : "") : ""; }   // b.krone: the wedding couple on its wedding day
 
   function laden() {
     fetch("daten/dorf.json", { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
       D = d;
-      d.bewohner.forEach(function (b) { byName[b.name] = b; });
-      var names = d.bewohner.map(function (b) { return b.name; }).filter(function (n) { return n.length > 3; })
-        .sort(function (a, b) { return b.length - a.length; }).map(function (n) { return n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); });
-      nameRe = names.length ? new RegExp("(^|[^\\w.\\u0000])(" + names.join("|") + ")(?![\\w])", "g") : null;
       tag = d.geschichte.tag;
-      kopf(); tage(); story(); liste(); lager(); karteBauen(); vonHash();
+      kopf(); tage(); story(); lager(); karteBauen(); vonHash();
     }).catch(function () { $("story-inhalt").innerHTML = '<p class="hinweis">Die Dorfdaten konnten gerade nicht geladen werden. Lade die Seite bitte neu.</p>'; });
   }
 
@@ -94,56 +77,6 @@
       $("komplett").textContent = "Komplette Geschichte lesen";
     }
     tage();
-  }
-
-  // ---------------------------------------------------------------- villagers
-  function passt(b, q) {
-    if (filter === "supporter" && !b.patreon) return false;
-    if (filter === "krank" && !(b.krank && b.lebt)) return false;
-    if (!q) return true;
-    return b.name.toLowerCase().indexOf(q) >= 0 || (b.beruf || "").toLowerCase().indexOf(q) >= 0;
-  }
-  function liste() {
-    var nk = D.bewohner.filter(function (b) { return b.krank && b.lebt; }).length;
-    $("f-krank").textContent = "🤒 Krank · " + nk; $("f-krank").hidden = !nk && filter !== "krank";
-    var q = $("suche").value.trim().toLowerCase().replace(/^@/, "");
-    var treffer = D.bewohner.filter(function (b) { return passt(b, q); });
-    if (q) treffer.sort(function (a, b) { return (b.name.toLowerCase().indexOf(q) === 0) - (a.name.toLowerCase().indexOf(q) === 0); });
-    $("treffer").textContent = treffer.length === 0
-      ? (filter === "krank" ? "Gerade ist niemand krank." : filter === "supporter" ? "Noch keine Supporter. Wer das Dorf unterstützt, bekommt eine Krone und erscheint hier." : "Niemand gefunden. Noch nicht eingezogen? Schreib deinen Beruf unter das neueste Video.")
-      : treffer.length + " Bewohner";
-    if (filter === "beruf") { $("liste").innerHTML = nachBeruf(treffer, q); return; }
-    var html = treffer.slice(0, shown).map(function (b) {
-      var neu = b.einzug === D.tag && !b.wartet;
-      var cls = "eintrag" + (neu ? " neu" : "") + (b.wartet ? " warte" : "") + supKlasse(b, "sup");
-      var marke = b.patreon ? '<span class="marke sup' + (b.patreon >= 3 ? " sup3" : "") + '">Supporter</span>'
-        : b.krone ? '<span class="marke sup">Hochzeit</span>' : b.wartet ? '<span class="marke warte">zieht bald ein</span>' : !b.lebt ? '<span class="marke tot">verstorben</span>' : neu ? '<span class="marke neu">neu</span>' : "";
-      return '<li><button type="button" class="' + cls + '" data-name="' + esc(b.name) + '"><span class="avatar" style="' + figur(b, 80, 16, 2) + '"></span>'
-        + '<span class="txt"><span class="n">' + esc(b.name) + marke + krankMarke(b) + '</span><span class="b">' + esc(b.beruf) + "</span></span></button></li>";
-    }).join("");
-    if (treffer.length > shown) html += '<li class="mehr"><button type="button" class="chip" id="mehr">Weitere ' + (treffer.length - shown) + " anzeigen</button></li>";
-    $("liste").innerHTML = html;
-  }
-
-  // by profession (Thomas 24.10.2026): the groups (Gesundheit, Sicherheit ...) fold open, inside each profession with its people
-  function kurz(b) {
-    return '<li><button type="button" class="eintrag' + supKlasse(b, "sup") + '" data-name="' + esc(b.name) + '"><span class="avatar" style="' + figur(b, 80, 16, 2) + '"></span>'
-      + '<span class="txt"><span class="n">' + esc(b.name) + (b.patreon ? '<span class="marke sup' + (b.patreon >= 3 ? " sup3" : "") + '">Supporter</span>' : b.krone ? '<span class="marke sup">Hochzeit</span>' : "") + krankMarke(b) + '</span><span class="b">' + esc(b.beruf) + "</span></span></button></li>";
-  }
-  // sick villagers (Thomas 27.10.2026): small red tag with the illness, only the name of it, no cause
-  function krankMarke(b) { return b.krank && b.lebt ? '<span class="marke krank">🤒 ' + esc(b.krank === true ? "krank" : b.krank) + "</span>" : ""; }
-  function nachBeruf(treffer, q) {
-    return (D.kategorien || ["Sonstige"]).map(function (k) {
-      var leute = treffer.filter(function (b) { return (b.kategorie || "Sonstige") === k; });
-      if (!leute.length) return "";
-      var berufe = {};
-      leute.forEach(function (b) { (berufe[b.beruf || "ohne Beruf"] = berufe[b.beruf || "ohne Beruf"] || []).push(b); });
-      var namen = Object.keys(berufe).sort(function (a, b) { return berufe[b].length - berufe[a].length || a.localeCompare(b, "de"); });
-      return '<li style="grid-column:1/-1"><details class="gruppe"' + (q ? " open" : "") + "><summary>" + esc(k) + "<small>" + leute.length + (leute.length === 1 ? " Bewohner" : " Bewohner") + "</small></summary>"
-        + '<div class="gruppe-innen">' + namen.map(function (n) {
-          return "<div><h4>" + esc(n) + " (" + berufe[n].length + ')</h4><ul class="liste">' + berufe[n].sort(function (a, b) { return a.name.localeCompare(b.name, "de"); }).map(kurz).join("") + "</ul></div>";
-        }).join("") + "</div></details></li>";
-    }).join("");
   }
 
   // ---------------------------------------------------------------- the map: tap a house, see who lives there
@@ -196,14 +129,13 @@
     $("dorf3d-status").hidden = false;
     dreiD = import("./lib/dorf3d.js").then(function (mod) {
       return mod.start($("dorf3d"), D.karte, function (hit) {
-        if (hit.villager && D.karte.namen && D.karte.namen[hit.villager] && byName[D.karte.namen[hit.villager]]) profil(D.karte.namen[hit.villager]);
-        else if (hit.house) { var i = D.karte.haeuser.findIndex(function (h) { return h.id === hit.house; }); if (i >= 0) kHaus(i); }
+        if (hit.villager) return;   // a figure: no profile any more (28.10.2026)
+        if (hit.house) { var i = D.karte.haeuser.findIndex(function (h) { return h.id === hit.house; }); if (i >= 0) kHaus(i); }
         else if (hit.gebaeude) kGebaeude(hit);
       }, function (t) { $("dorf3d-status").textContent = t; }, {
         verlauf: !!D.karte.verlauf,
         tag: tag || (/[?&]tag=(\d+)/.test(location.search) ? +RegExp.$1 : null),
         onTag: function (n) { dreiD.then(function (v) { if (v) v.ende(); starte3D(n); }); },
-        wer: function (id) { var n = D.karte.namen && D.karte.namen[id], b = n && byName[n]; return n ? n + (b && b.beruf ? " (" + b.beruf + ")" : "") : "Jemand"; },
         verlaufStart: /[?&]um=(\d\d)(\d\d)/.test(location.search) ? +RegExp.$1 * 60 + +RegExp.$2 : null,
         verlaufFolge: /[?&]folge=(\d+)/.test(location.search) ? +RegExp.$1 : null,
         verlaufPlay: /[?&]play=1/.test(location.search),
@@ -246,40 +178,26 @@
     document.querySelectorAll(".karte-punkt.aktiv").forEach(function (b) { b.classList.remove("aktiv"); });
     var b = document.querySelector('[data-haus="' + i + '"]'); if (b) b.classList.add("aktiv");
     var info = o.dorf ? (D.dorf || []).filter(function (d) { return d.id === o.dorf; })[0] : null;
-    var leute = o.wer.map(function (n) { return byName[n]; }).filter(Boolean);
-    var h = "<h3>" + (info ? esc(info.name) : leute.length ? "Haus von " + esc(leute.map(function (b) { return b.name; }).join(", ")) : "Leeres Haus") + "</h3>";
+    var leute = o.wer || [];
+    var h = "<h3>" + (info ? esc(info.name) : leute.length ? "Haus von " + esc(leute.join(", ")) : "Leeres Haus") + "</h3>";
     if (info) h += "<p>" + verlinken(info.text) + "</p>";
-    if (leute.length) h += '<p class="hinweis-klein">' + (info ? "Hier wohnt und arbeitet:" : "Hier wohnt:") + '</p><div class="karte-leute">' + leute.map(function (b) {
-      return '<button type="button" class="eintrag" data-name="' + esc(b.name) + '"><span class="avatar" style="' + figur(b, 80, 16, 2) + '"></span><span class="txt"><span class="n">' + esc(b.name) + '</span><span class="b">' + esc(b.beruf) + "</span></span></button>";
-    }).join("") + "</div>";
+    if (leute.length) h += '<p class="hinweis-klein">' + (info ? "Hier wohnt und arbeitet:" : "Hier wohnt:") + "</p>" + namenListe(leute);
     kInfo(h);
     zaehlen("Karte Haus", { art: info ? info.name : "Wohnhaus" });
   }
-  // the people of a place by profession, each with a heading (Thomas 24.10.2026: in the school teachers and pupils apart)
-  function nachGruppen(leute, zuerst) {
-    var g = {};
-    leute.forEach(function (b) { (g[b.beruf] = g[b.beruf] || []).push(b); });
-    var namen = Object.keys(g).sort(function (a, b) {
-      var ia = zuerst.indexOf(a), ib = zuerst.indexOf(b);
-      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b, "de");
-    });
-    return namen.map(function (n) {
-      return '<h4 class="pop-gruppe">' + esc(n) + " (" + g[n].length + ')</h4><div class="karte-leute">' + g[n].map(function (b) {
-        return '<button type="button" class="eintrag" data-name="' + esc(b.name) + '"><span class="avatar" style="' + figur(b, 80, 16, 2) + '"></span><span class="txt"><span class="n">' + esc(b.name) + '</span><span class="b">' + esc(b.beruf) + "</span></span></button>";
-      }).join("") + "</div>";
-    }).join("");
-  }
+  // the names at a place, plain text only (Thomas 28.10.2026: no profiles, no professions, no portraits)
+  function namenListe(namen) { return '<div class="karte-leute">' + namen.map(function (n) { return '<span class="karte-name">' + esc(n) + "</span>"; }).join("") + "</div>"; }
   // a building in the 3D village without a house: its place card if there is one, else everybody whose work spot is there
   function kGebaeude(hit) {
     var ort = (D.karte.orte || []).filter(function (o) { return Math.hypot(o.x - hit.x, o.z - hit.z) < (o.r || 10) + 4; })[0];
     if (ort && (D.dorf || []).some(function (d) { return d.id === ort.dorf; })) { kOrt(ort.dorf); return; }
     var leute = (D.karte.arbeit || []).filter(function (a) { return Math.hypot(a[1] - hit.x, a[2] - hit.z) < hit.r; })
-      .map(function (a) { return byName[a[0]]; }).filter(Boolean);
+      .map(function (a) { return a[0]; });
     // during the day replay: who works inside right now (hidden figures at the building)
-    var drin = hit.drinnen ? (hit.drinnen(hit.x, hit.z, hit.r) || []).map(function (n) { return byName[n]; }).filter(Boolean) : [];
+    var drin = hit.drinnen ? (hit.drinnen(hit.x, hit.z, hit.r) || []) : [];
     kInfo("<h3>" + esc(hit.gebaeude) + "</h3>"
-      + (drin.length ? '<p class="hinweis-klein">Arbeitet gerade hier (drinnen) ' + drin.length + ":</p>" + nachGruppen(drin, []) : "")
-      + (leute.length ? '<p class="hinweis-klein">Hier arbeiten ' + leute.length + ":</p>" + nachGruppen(leute, []) : (drin.length ? "" : "<p>Hier arbeitet gerade niemand.</p>")));
+      + (drin.length ? '<p class="hinweis-klein">Arbeitet gerade hier (drinnen) ' + drin.length + ":</p>" + namenListe(drin) : "")
+      + (leute.length ? '<p class="hinweis-klein">Hier arbeiten ' + leute.length + ":</p>" + namenListe(leute) : (drin.length ? "" : "<p>Hier arbeitet gerade niemand.</p>")));
     zaehlen("3D Gebäude", { ort: hit.gebaeude });
   }
   var ohneOrt = [];
@@ -293,9 +211,9 @@
     var info = (D.dorf || []).filter(function (d) { return d.id === id; })[0];
     if (!info) return;
     var ort = (D.karte.orte || []).filter(function (o) { return o.dorf === id; })[0] || {};
-    var leute = (ort.wer || []).map(function (n) { return byName[n]; }).filter(Boolean);
+    var leute = ort.wer || [];
     kInfo("<h3>" + esc(info.name) + '</h3><img src="' + esc(info.bild) + '" alt="" style="width:100%;border-radius:12px;aspect-ratio:16/10;object-fit:cover"><p>' + verlinken(info.text) + "</p>"
-      + (leute.length ? '<p class="hinweis-klein">' + (id === "schule" ? "In der Schule sind " : "Hier arbeiten ") + leute.length + ":</p>" + nachGruppen(leute, id === "schule" ? ["Lehrer", "Schüler"] : []) : ""));
+      + (leute.length ? '<p class="hinweis-klein">' + (id === "schule" ? "In der Schule sind " : "Hier arbeiten ") + leute.length + ":</p>" + namenListe(leute) : ""));
     zaehlen("Karte Ort", { ort: info.name });
   }
   (function () {
@@ -369,71 +287,13 @@
     $("lager-inhalt").innerHTML = h || '<p class="hinweis">Das Lager ist noch leer.</p>';
   }
 
-  // ---------------------------------------------------------------- profile
-  function stufe(v) { return v >= 60 ? "" : v >= 35 ? "mittel" : "niedrig"; }
-  function profil(name) {
-    var b = byName[name];
-    if (!b) return;
-    var h = '<div class="p-bild' + supKlasse(b, "sup") + '" role="img" aria-label="So sieht ' + esc(b.name) + ' im Dorf aus" style="' + figur(b, 160, 0, 0) + '"></div>';
-    h += '<div class="p-kopf"><h2 id="p-name">' + esc(b.name) + '</h2><span class="beruf">' + esc(b.beruf) + "</span>";
-    if (b.patreon) h += '<span class="sup-zeile">♛ Supporter · ' + esc(b.supporter) + "</span>";
-    if (b.krone) h += '<span class="sup-zeile">♛ ' + esc(b.krone) + "</span>";
-    h += '<span class="ort">' + (b.wartet ? "Zieht beim nächsten Tag ein" : "Eingezogen an Tag " + b.einzug + (b.viertel ? ", wohnt " + esc(b.viertel) : "")) + "</span></div>";
-    var mehr = [["Arbeit", b.taetigkeit], ["Wohnt in", b.haus], ["Abends meist", b.abend], ["Hilft auch bei", b.nebenrolle]].filter(function (x) { return x[1]; });
-    if (mehr.length) h += '<dl class="p-mehr">' + mehr.map(function (x) { return "<div><dt>" + x[0] + "</dt><dd>" + esc(x[1]) + "</dd></div>"; }).join("") + "</dl>";
-    if (b.wartet) {
-      h += '<div class="block"><p class="hinweis">Dein Kommentar ist angekommen. Du ziehst im nächsten Video ein, dann siehst du hier, was du im Dorf erlebst.</p></div>';
-    } else if (!b.lebt) {
-      h += '<div class="block"><p class="hinweis">' + esc(b.name) + " lebt nicht mehr im Dorf.</p></div>";
-    } else {
-      if (b.werte) {
-        h += '<div class="block"><h3>So geht es ' + esc(b.name) + ' gerade</h3><p>Stimmung: <span class="laune">' + esc(b.laune) + "</span>"
-          + (b.krank ? " · krank: " + esc(b.krank) : "") + '</p><div class="werte">';
-        WERTE.forEach(function (w) {
-          var v = b.werte[w[0]];
-          if (v == null) return;
-          v = Math.round(v);
-          h += '<div class="wert"><span>' + w[1] + '</span><span class="balken"><i class="' + stufe(v) + '" style="width:' + Math.max(3, v) + '%"></i></span><span class="zahl">' + v + "</span></div>";
-        });
-        h += "</div></div>";
-      }
-      if (b.tagLauf && b.tagLauf.length) {
-        h += '<div class="block"><h3>Tag ' + D.tag + " von " + esc(b.name) + '</h3><ol class="zeitleiste">';
-        b.tagLauf.forEach(function (e) {
-          var cls = e.art === "gefahr" ? "gefahr" : e.art === "neu" ? "neu" : e.art === "freund" ? "freund-z" : "";
-          var text = e.art === "ereignis" || e.art === "gefahr" ? e.text : b.name + " " + e.text;
-          h += '<li class="' + cls + '"><time>' + esc(e.zeit) + "</time><p>" + verlinken(text) + "</p></li>";
-        });
-        h += "</ol></div>";
-      }
-      if (b.freunde && b.freunde.length) {
-        h += '<div class="block"><h3>Freunde im Dorf</h3><div class="freunde">' + b.freunde.map(function (f) {
-          return '<button type="button" class="freund" data-name="' + esc(f.name) + '">' + esc(f.name) + "<small>" + esc(f.stufe) + "</small></button>";
-        }).join("") + "</div></div>";
-      }
-    }
-    $("profil-inhalt").innerHTML = h;
-    $("profil").hidden = false; $("profil-hg").hidden = false;
-    $("profil").scrollTop = 0;
-    $("profil-zu").focus();
-    if (/^[\w.~-]+$/.test(name)) { try { history.replaceState(null, "", "#" + name); } catch (e) { /* preview frame */ } }
-  }
-  function schliessen() {
-    $("profil").hidden = true; $("profil-hg").hidden = true;
-    var tab = TABS.filter(function (t) { return !$("panel-" + t).hidden; })[0] || "story";
-    try { history.replaceState(null, "", "#" + tab); } catch (e) { /* ignore */ }
-  }
   function vonHash() {
     var n = decodeURIComponent(location.hash.slice(1));
     if (n === "dorf") n = "karte";   // the old "Dorf" tab is on the map now
-    if (TABS.indexOf(n) >= 0) { zeigeTab(n); return; }
-    if (n && byName[n]) { zeigeTab("bewohner"); profil(n); }
+    if (TABS.indexOf(n) >= 0) zeigeTab(n);   // old links to the resident list or a profile (#bewohner, #name) just open the story
   }
 
   document.addEventListener("click", function (ev) {
-    var t = ev.target.closest("[data-name]");
-    if (t && !$("pop").hidden) popZu();   // a name in the map window: the profile instead
-    if (t) { zaehlen("Profil geöffnet", { von: t.classList.contains("eintrag") ? "Liste" : t.classList.contains("freund") ? "Freunde" : "Text" }); profil(t.getAttribute("data-name")); return; }
     var tab = ev.target.closest("[data-tab]");
     if (tab) {
       zaehlen("Reiter", { reiter: tab.getAttribute("data-tab"), von: tab.classList.contains("knopf") ? "Leiste" : "Reiter" });
@@ -444,26 +304,12 @@
     var tg = ev.target.closest("[data-tag]");
     if (tg) { tag = +tg.getAttribute("data-tag"); zaehlen("Tag gewählt", { tag: tag }); komplett = false; story(); return; }
     if (ev.target.closest("#komplett")) { if (!komplett) zaehlen("Komplette Geschichte"); komplett = !komplett; story(); $("panel-story").scrollIntoView({ block: "start" }); return; }
-    if (ev.target.closest("#mehr")) { zaehlen("Mehr Bewohner"); shown += 240; liste(); return; }
     var md = ev.target.closest("[data-modus]");
-    if (md) { modus(md.getAttribute("data-modus")); return; }
-    var f = ev.target.closest("[data-filter]");
-    if (f) {
-      filter = f.getAttribute("data-filter"); shown = 120; zaehlen("Filter", { filter: filter });
-      document.querySelectorAll("[data-filter]").forEach(function (x) { x.classList.toggle("aktiv", x === f); });
-      liste();
-    }
+    if (md) modus(md.getAttribute("data-modus"));
   });
-  $("profil-zu").addEventListener("click", schliessen);
   $("pop-zu").addEventListener("click", popZu);
   $("pop-hg").addEventListener("click", popZu);
-  $("profil-hg").addEventListener("click", schliessen);
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("profil").hidden) schliessen(); else if (e.key === "Escape" && !$("pop").hidden) popZu(); });
-  $("suche").addEventListener("input", function () {
-    shown = 120; liste();
-    clearTimeout(suchTimer);   // one event per search, not per letter
-    suchTimer = setTimeout(function () { if ($("suche").value.trim()) zaehlen("Suche", { gefunden: $("liste").children.length > 0 ? "ja" : "nein" }); }, 1200);
-  });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("pop").hidden) popZu(); });
   window.addEventListener("hashchange", vonHash);
   laden();
 })();
@@ -493,8 +339,10 @@
   }
   function hashSetzen(h) { try { history.replaceState(null, "", h ? "#" + h : location.pathname + location.search); } catch (e) { /* preview frame */ } }
 
-  // Zombieville tabs (Thomas 26.10.2026): Übersicht (default), Farm (3D map, only a view), Lager (stock); the tab is kept in the hash (#zv-farm)
-  var ZV_TABS = ["uebersicht", "farm", "lager", "crafting"], tabStart = null, farm = null;
+  // Zombieville tabs (Thomas 26.10.2026): Übersicht (default), Story (28.10.), Farm (3D map, only a view), Lager (stock); the tab is kept in the hash (#zv-farm)
+  // no "Bewohner" tab (Thomas 28.10.2026, privacy: removed before it went online)
+  // Crafting is hidden since 28.10.2026 (comes into the game later): panel + code stay, add "crafting" here and its button in index.html to show it again
+  var ZV_TABS = ["uebersicht", "story", "farm", "lager"], tabStart = null, farm = null;
   function zvTab(name, merken) {
     if (ZV_TABS.indexOf(name) < 0) name = "uebersicht";
     ZV_TABS.forEach(function (t) {
@@ -505,6 +353,52 @@
     if (name === "crafting") zvCraftingLaden();
     if (merken) hashSetzen("zv-" + name);
   }
+  // buttons that jump to a tab (story teaser on the overview)
+  document.addEventListener("click", function (ev) {
+    var g = ev.target.closest("[data-zvgehe]");
+    if (g) { zvTab(g.getAttribute("data-zvgehe"), true); window.scrollTo(0, 0); }
+  });
+
+  // ---- Story (Thomas 28.10.2026): one told section per POSTED day, text + pictures (zombieville.py: geschichten_oeffentlich)
+  var ZV = null, zvTagW = null, zvKomplett = false;
+  function zvTagName(t) { return "Tag " + t; }
+  // @name -> the name in bold, plain text, never a link (no resident list, Thomas 28.10.2026)
+  function zvVerlinken(t) { return esc(t).replace(/@([A-Za-z0-9._]+[A-Za-z0-9_])/g, "<strong>$1</strong>"); }
+  function zvGeschichte(g) {
+    var bilder = g.bilder || [];
+    return '<article class="geschichte zv-geschichte"><p class="etikett">' + zvTagName(g.tag) + "</p><h2>" + esc(g.titel) + '</h2><div class="g-text">'
+      + g.absaetze.map(function (p, i) {
+        var hier = bilder.filter(function (b) { return b.nach === i; });
+        return "<p>" + zvVerlinken(p) + "</p>" + (hier.length ? '<div class="zv-bilder' + (hier.length > 1 ? " zv-bilder-2" : "") + '">' + hier.map(function (b) {
+          return '<figure class="bild zv-bild"><img src="' + esc(b.datei) + '" alt="' + esc(b.text.replace(/@/g, "")) + '" loading="lazy" width="720" height="900"><figcaption>' + zvVerlinken(b.text) + "</figcaption></figure>";
+        }).join("") + "</div>" : "");
+      }).join("") + "</div></article>";
+  }
+  function zvStory() {
+    var gs = (ZV && ZV.geschichten) || [];
+    if (!gs.length) { $("zv-story-inhalt").innerHTML = '<p class="hinweis-klein">Die Story beginnt mit dem ersten Video.</p>'; return; }
+    if (zvTagW == null) zvTagW = gs[gs.length - 1].tag;
+    $("zv-tage").innerHTML = gs.map(function (g) {
+      return '<button type="button" class="tag-knopf" data-zvstorytag="' + g.tag + '" aria-pressed="' + (!zvKomplett && g.tag === zvTagW) + '">' + zvTagName(g.tag) + "</button>";
+    }).join("");
+    $("zv-story-inhalt").innerHTML = zvKomplett ? '<div class="komplett">' + gs.map(zvGeschichte).join("") + "</div>"
+      : zvGeschichte(gs.filter(function (g) { return g.tag === zvTagW; })[0] || gs[gs.length - 1]);
+    $("zv-komplett").hidden = gs.length < 2;
+    $("zv-komplett").textContent = zvKomplett ? "Nur einen Tag zeigen" : "Ganze Geschichte lesen";
+    // teaser on the overview: newest day
+    var n = gs[gs.length - 1], b = (n.bilder || [])[0];
+    $("zv-neu-etikett").textContent = "Neu in der Story · " + zvTagName(n.tag);
+    $("zv-neu-titel").textContent = n.titel;
+    $("zv-neu-anfang").innerHTML = zvVerlinken(n.absaetze[0] || "");
+    $("zv-neu-bild").innerHTML = b ? '<img src="' + esc(b.datei) + '" alt="" width="720" height="900" loading="lazy">' : "";
+    $("zv-neu").hidden = false;
+  }
+  document.addEventListener("click", function (ev) {
+    var t = ev.target.closest("[data-zvstorytag]");
+    if (t) { zvTagW = +t.getAttribute("data-zvstorytag"); zvKomplett = false; zvStory(); return; }
+    if (ev.target.closest("#zv-komplett")) { zvKomplett = !zvKomplett; zvStory(); $("zv-panel-story").scrollIntoView({ block: "start" }); }
+  });
+
   function zvFarmZeigen(an) {
     if (!an) { if (farm) farm.then(function (f) { if (f) f.zeigen(false); }); return; }
     if (farm) { farm.then(function (f) { if (f) f.zeigen(true); }); return; }
@@ -595,21 +489,9 @@
       $("zv-ueberlebende").textContent = d.ueberlebende;
       $("zv-einzug-titel").textContent = "Ziehen an " + d.einzugTag + " ein";
       $("zv-einzug").textContent = d.einzug;
-      // the first video keeps its block ("So fängt es an"), every later video gets its own block above it, newest first (Thomas 27.10.2026)
-      var vs = d.videos || [], v0 = vs[0];
-      if (v0) { $("zv-video-link").href = v0.link; $("zv-video-knopf").href = v0.link; $("zv-video-img").src = v0.bild; $("zv-video-etikett").textContent = v0.name + " · Tag 0"; }
-      var erst = $("zv-video-link").closest("section");
-      document.querySelectorAll(".zv-video-neu").forEach(function (x) { x.remove(); });
-      vs.slice(1).forEach(function (v) {
-        var t = (v.titel.match(/Tag (\d+)/) || [])[1] || "";
-        var sec = document.createElement("section"); sec.className = "zv-block zv-video zv-video-neu";
-        sec.innerHTML = '<a class="zv-video-bild" href="' + esc(v.link) + '" target="_blank" rel="noopener" data-umami-event="Zombieville Video"><img src="' + esc(v.bild) + '" alt="' + esc(v.titel) + '" width="540" height="960" loading="lazy"></a>'
-          + '<div class="zv-video-text"><p class="etikett">' + esc(v.name) + (t ? " · Tag " + t : "") + "</p><h2>" + (t === "1" ? "Der erste Tag im Camp" : "Tag " + esc(t) + " im Camp") + "</h2>"
-          + "<p>" + (t === "1" ? "Die ersten Überlebenden aus euren Kommentaren ziehen ein. Was dabei passiert, siehst du im Video." : "Wie es im Camp weitergeht, siehst du im Video.") + "</p>"
-          + '<a class="knopf zv-knopf" href="' + esc(v.link) + '" target="_blank" rel="noopener" data-umami-event="Zombieville Video">Video auf Instagram ansehen</a></div>';
-        erst.parentNode.insertBefore(sec, erst);
-        erst = sec;
-      });
+      // no Instagram video blocks any more (Thomas 28.10.2026); the story instead (comments never)
+      ZV = d;
+      zvStory();
       // only summarised, neutral ideas and roles with a count - no names, no comment text (Thomas 26.10.2026)
       if (d.ideen && d.ideen.length) {
         $("zv-ideen").innerHTML = d.ideen.map(function (i) { return '<li><span class="zv-idee-text">' + esc(i.idee) + '</span><span class="zv-anzahl">' + i.anzahl + "×</span></li>"; }).join("");
@@ -620,7 +502,7 @@
         $("zv-rollen").innerHTML = d.rollen.map(function (r) { return "<li>" + esc(r.rolle) + '<span class="zv-anzahl">' + r.anzahl + "</span></li>"; }).join("");
         $("zv-rollen-block").hidden = false;
       }
-    }).catch(function () { $("zv-einzug").textContent = "–"; geladen = false; });
+    }).catch(function () { $("zv-einzug").textContent = "–"; geladen = false; $("zv-story-inhalt").innerHTML = '<p class="hinweis-klein">Die Story konnte gerade nicht geladen werden. Lade die Seite bitte neu.</p>'; });
   }
   // a link straight to a Zombieville tab (#zv-farm) opens it without the world chooser
   var h = decodeURIComponent(location.hash.slice(1));

@@ -196,6 +196,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .karte-info p { margin: 0; }
 .karte-leute { display: flex; flex-wrap: wrap; gap: 8px; }
 .karte-leute .eintrag { width: auto; }
+.karte-name { background: var(--flaeche-2); border-radius: 999px; padding: 4px 12px; font-weight: 700; font-size: 14px; overflow-wrap: anywhere; }   /* names at a map place: plain text, no profile (28.10.2026) */
 
 .reiter-gold { color: var(--gold-text); }
 .unterstuetzen-kopf { display: grid; gap: 8px; }
@@ -417,3 +418,27 @@ button.zv-karte:hover, button.zv-karte:focus-visible { border-color: #9a3b2a; ou
 .marke.krank { background: #fde3df; color: #b3261e; text-transform: none; letter-spacing: 0; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .marke.krank { background: #4a1f1b; color: #ffb4a8; } }
 :root[data-theme="dark"] .marke.krank { background: #4a1f1b; color: #ffb4a8; }
+/* Zombieville "Story" tab (Thomas 28.10.2026): built like the village's story, in the camp's rust red (the "Bewohner" tab was removed before going online) */
+.zv-tage .tag-knopf[aria-pressed="true"] { background: #9a3b2a; border-color: #9a3b2a; }
+.zv-geschichte { border-top: 6px solid #9a3b2a; }
+.zv-geschichte .etikett { color: #9a3b2a; }
+.zv-geschichte .g-text p { font-size: 17px; }
+.zv-komplett { justify-self: start; }
+.zv-bilder { display: grid; gap: 10px; max-width: 440px; }
+.zv-bilder-2 { grid-template-columns: 1fr 1fr; max-width: 660px; }
+.zv-bild { margin: 2px 0; }
+.zv-bild img { aspect-ratio: 4 / 5; }
+.zv-bilder-2 .zv-bild figcaption { font-size: 13px; line-height: 1.35; }
+.zv-neu { grid-template-columns: minmax(110px, 180px) 1fr; gap: 20px; align-items: center; }
+@media (max-width: 520px) { .zv-neu { grid-template-columns: 104px 1fr; gap: 14px; } .zv-neu-text p:not(.etikett) { font-size: 15px; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; } }
+.zv-neu-bild { display: block; border: 0; padding: 0; border-radius: 14px; overflow: hidden; box-shadow: 0 6px 18px rgba(0, 0, 0, .25); cursor: pointer; background: var(--flaeche-2); aspect-ratio: 4 / 5; }
+.zv-neu-bild img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.zv-neu-text { display: grid; gap: 8px; }
+.zv-neu-text p { margin: 0; }
+.zv-neu-text .knopf { justify-self: start; }
+/* phone: the tabs as a calm 3-column grid instead of a lonely second row */
+@media (max-width: 520px) { .zv-leiste .reiter { display: grid; grid-template-columns: repeat(3, 1fr); overflow-x: visible; gap: 0; }
+  .zv-leiste .reiter-knopf, .zv-leiste .reiter-knopf.zv-bald { font-size: 15px; padding: 9px 4px 7px; text-align: center; line-height: 1.15; min-height: 44px; }
+  .zv-leiste .reiter-knopf.zv-bald { padding-top: 4px; padding-bottom: 3px; } }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .zv-geschichte .etikett { color: #f09a80; } }
+:root[data-theme="dark"] .zv-geschichte .etikett { color: #f09a80; }
