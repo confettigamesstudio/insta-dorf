@@ -196,7 +196,6 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .karte-info p { margin: 0; }
 .karte-leute { display: flex; flex-wrap: wrap; gap: 8px; }
 .karte-leute .eintrag { width: auto; }
-.karte-name { background: var(--flaeche-2); border-radius: 999px; padding: 4px 12px; font-weight: 700; font-size: 14px; overflow-wrap: anywhere; }   /* names at a map place: plain text, no profile (28.10.2026) */
 
 .reiter-gold { color: var(--gold-text); }
 .unterstuetzen-kopf { display: grid; gap: 8px; }
@@ -418,7 +417,7 @@ button.zv-karte:hover, button.zv-karte:focus-visible { border-color: #9a3b2a; ou
 .marke.krank { background: #fde3df; color: #b3261e; text-transform: none; letter-spacing: 0; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .marke.krank { background: #4a1f1b; color: #ffb4a8; } }
 :root[data-theme="dark"] .marke.krank { background: #4a1f1b; color: #ffb4a8; }
-/* Zombieville "Story" tab (Thomas 28.10.2026): built like the village's story, in the camp's rust red (the "Bewohner" tab was removed before going online) */
+/* Zombieville "Story" + "Bewohner" tabs (Thomas 28.10.2026): built like the village's story and resident list, in the camp's rust red */
 .zv-tage .tag-knopf[aria-pressed="true"] { background: #9a3b2a; border-color: #9a3b2a; }
 .zv-geschichte { border-top: 6px solid #9a3b2a; }
 .zv-geschichte .etikett { color: #9a3b2a; }
@@ -429,6 +428,8 @@ button.zv-karte:hover, button.zv-karte:focus-visible { border-color: #9a3b2a; ou
 .zv-bild { margin: 2px 0; }
 .zv-bild img { aspect-ratio: 4 / 5; }
 .zv-bilder-2 .zv-bild figcaption { font-size: 13px; line-height: 1.35; }
+.zv-name { font: inherit; font-weight: 700; color: #9a3b2a; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.zv-name:hover, .zv-name:focus-visible { text-decoration-thickness: 2px; outline: none; }
 .zv-neu { grid-template-columns: minmax(110px, 180px) 1fr; gap: 20px; align-items: center; }
 @media (max-width: 520px) { .zv-neu { grid-template-columns: 104px 1fr; gap: 14px; } .zv-neu-text p:not(.etikett) { font-size: 15px; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; } }
 .zv-neu-bild { display: block; border: 0; padding: 0; border-radius: 14px; overflow: hidden; box-shadow: 0 6px 18px rgba(0, 0, 0, .25); cursor: pointer; background: var(--flaeche-2); aspect-ratio: 4 / 5; }
@@ -436,9 +437,31 @@ button.zv-karte:hover, button.zv-karte:focus-visible { border-color: #9a3b2a; ou
 .zv-neu-text { display: grid; gap: 8px; }
 .zv-neu-text p { margin: 0; }
 .zv-neu-text .knopf { justify-self: start; }
-/* phone: the tabs as a calm 3-column grid instead of a lonely second row */
+.zv-suchleiste { position: static; padding-block: 0; }
+#zv-suche { width: 100%; font: inherit; font-size: 17px; padding: 14px 16px; border-radius: 14px; border: 2px solid var(--linie); background: var(--flaeche); color: var(--text); }
+#zv-suche:focus { outline: none; border-color: #9a3b2a; }
+.zv-filter { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.zv-filter .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 5px 12px; }
+.zv-filter .chip.aktiv { background: #9a3b2a; border-color: #9a3b2a; }
+.zv-filter-titel { font-weight: 700; font-size: 13px; color: var(--leise); margin-right: 2px; }
+.zv-punkt { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .7); }
+@media (max-width: 520px) { .zv-filter { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: -16px; padding-inline: 16px; } .zv-filter::-webkit-scrollbar { display: none; } .zv-filter .chip { flex: 0 0 auto; } }
+.zv-gruppe { display: grid; gap: 10px; margin-bottom: 18px; }
+.zv-gruppe h3 { font-size: 20px; display: flex; align-items: center; gap: 8px; }
+.zv-gruppe h3::before { content: ""; width: 12px; height: 12px; border-radius: 4px; background: var(--zv-farbe); }
+.zv-gruppe h3 small { color: var(--leise); font: 700 15px var(--body); }
+.zv-leute { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 8px; }
+.zv-person { display: grid; grid-template-columns: 42px 1fr auto; align-items: center; gap: 12px; background: var(--flaeche); border-radius: 14px; padding: 8px 12px 8px 8px; box-shadow: 0 2px 8px rgba(34, 48, 31, .06); min-width: 0; border: 2px solid transparent; }
+.zv-person-treffer { border-color: #9a3b2a; }
+.zv-initiale { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: var(--zv-farbe); color: #fff; font: 700 19px var(--display); }
+.zv-person-txt { display: grid; min-width: 0; }
+.zv-person-name { font-weight: 700; overflow-wrap: anywhere; line-height: 1.3; }
+.zv-person-rolle { color: var(--leise); font-size: 14px; line-height: 1.3; }
+.zv-person-tag { font: 700 11px var(--body); text-transform: uppercase; letter-spacing: .04em; color: var(--leise); border: 1px solid var(--linie); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+.zv-mehr { margin: 0; text-align: center; }
+/* phone: the six tabs as a calm 3 x 2 grid instead of a lonely second row */
 @media (max-width: 520px) { .zv-leiste .reiter { display: grid; grid-template-columns: repeat(3, 1fr); overflow-x: visible; gap: 0; }
   .zv-leiste .reiter-knopf, .zv-leiste .reiter-knopf.zv-bald { font-size: 15px; padding: 9px 4px 7px; text-align: center; line-height: 1.15; min-height: 44px; }
   .zv-leiste .reiter-knopf.zv-bald { padding-top: 4px; padding-bottom: 3px; } }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .zv-geschichte .etikett { color: #f09a80; } }
-:root[data-theme="dark"] .zv-geschichte .etikett { color: #f09a80; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .zv-name, :root:not([data-theme="light"]) .zv-geschichte .etikett { color: #f09a80; } }
+:root[data-theme="dark"] .zv-name, :root[data-theme="dark"] .zv-geschichte .etikett { color: #f09a80; }
