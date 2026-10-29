@@ -558,43 +558,56 @@
     if (ev.target.closest("#zv-komplett")) { zvKomplett = !zvKomplett; zvStory(); $("zv-panel-story").scrollIntoView({ block: "start" }); }
   });
 
-  // ---- Bewohner (Thomas 28.10.2026): Insta name + role + move-in day ONLY (no comment text, no ideas), grouped by role, search, day filter
+  // ---- Bewohner (Thomas 28.10.2026): Insta name + role + move-in day ONLY (no comment text, no ideas), search, day filter
+  // like the village since 29.10.2026: Alle (flat list, supporters first) / Nach Beruf (groups fold open, inside each role) / Supporter
   var zvGruppe = "alle", zvTagF = "alle", zvZeigen = 240;
   var ZV_FARBE = { "Führung": "#c99a1a", "Schutz": "#9a3b2a", "Versorgung": "#4f8a32", "Bauen & Technik": "#5e6b78", "Medizin & Forschung": "#2f7f8a", "Sonstige": "#7a5c8f" };
   function zvChip(attr, wert, text, aktiv) { return '<button type="button" class="chip' + (aktiv ? " aktiv" : "") + '" ' + attr + '="' + esc(wert) + '" aria-pressed="' + aktiv + '">' + text + "</button>"; }
+  function zvPerson(b, q) {
+    var t = b.patreon || 0;
+    return '<li class="zv-person' + (t ? " sup" + (t >= 3 ? " sup3" : "") : "") + (q && b.name.toLowerCase() === q ? " zv-person-treffer" : "") + '" style="--zv-farbe:' + (ZV_FARBE[b.gruppe] || "#777") + '">'
+      + '<span class="zv-initiale" aria-hidden="true">' + esc(b.name.replace(/^[^A-Za-z0-9]+/, "").charAt(0).toUpperCase() || "?") + "</span>"
+      + '<span class="zv-person-txt"><span class="zv-person-name">' + esc(b.name) + (t ? '<span class="marke sup' + (t >= 3 ? " sup3" : "") + '">Supporter</span>' : "") + '</span><span class="zv-person-rolle">' + esc(b.rolle) + "</span></span>"
+      + '<span class="zv-person-tag">Tag ' + b.tag + "</span></li>";
+  }
   function zvListe() {
     if (!ZV) return;
     var alle = ZV.bewohner || [], q = $("zv-suche").value.trim().toLowerCase().replace(/^@/, "");
     var imTag = alle.filter(function (b) { return zvTagF === "alle" || b.tag === +zvTagF; });
-    var gruppen = (ZV.gruppen || []).filter(function (g) { return alle.some(function (b) { return b.gruppe === g; }); });
-    $("zv-gruppen").innerHTML = zvChip("data-zvgruppe", "alle", "Alle · " + imTag.length, zvGruppe === "alle") + gruppen.map(function (g) {
-      return zvChip("data-zvgruppe", g, '<span class="zv-punkt" style="background:' + (ZV_FARBE[g] || "#777") + '"></span>' + esc(g) + " · " + imTag.filter(function (b) { return b.gruppe === g; }).length, zvGruppe === g);
-    }).join("");
+    var nSup = imTag.filter(function (b) { return b.patreon; }).length;
+    $("zv-gruppen").innerHTML = zvChip("data-zvgruppe", "alle", "Alle · " + imTag.length, zvGruppe === "alle") + zvChip("data-zvgruppe", "beruf", "Nach Beruf", zvGruppe === "beruf")
+      + zvChip("data-zvgruppe", "supporter", "Supporter" + (nSup ? " · " + nSup : ""), zvGruppe === "supporter");
     var tage = []; alle.forEach(function (b) { if (tage.indexOf(b.tag) < 0) tage.push(b.tag); }); tage.sort(function (a, b) { return a - b; });
     $("zv-einzugstage").innerHTML = '<span class="zv-filter-titel">Eingezogen:</span>' + zvChip("data-zvtagf", "alle", "Alle Tage", zvTagF === "alle")
       + tage.map(function (t) { return zvChip("data-zvtagf", t, "Tag " + t, String(zvTagF) === String(t)); }).join("");
     var treffer = imTag.filter(function (b) {
-      return (zvGruppe === "alle" || b.gruppe === zvGruppe) && (!q || b.name.toLowerCase().indexOf(q) >= 0 || b.rolle.toLowerCase().indexOf(q) >= 0);
+      return (zvGruppe !== "supporter" || b.patreon) && (!q || b.name.toLowerCase().indexOf(q) >= 0 || b.rolle.toLowerCase().indexOf(q) >= 0);
     });
     $("zv-treffer").textContent = treffer.length ? treffer.length + (treffer.length === 1 ? " Überlebender" : " Überlebende")
+      : zvGruppe === "supporter" ? "Noch keine Supporter im Camp. Wer Zombieville unterstützt, bekommt eine Krone und erscheint hier."
       : "Niemand gefunden. Noch nicht eingezogen? Schreib unter das neueste Video, wie du hilfst.";
-    // grouped: group heading, inside sorted by role (biggest roles first), then name
-    var anzahl = {}; treffer.forEach(function (b) { anzahl[b.rolle] = (anzahl[b.rolle] || 0) + 1; });
-    var rest = zvZeigen, html = "";
-    gruppen.forEach(function (g) {
-      var leute = treffer.filter(function (b) { return b.gruppe === g; });
-      if (!leute.length || rest <= 0) return;
-      leute.sort(function (a, b) { return (anzahl[b.rolle] - anzahl[a.rolle]) || a.rolle.localeCompare(b.rolle, "de") || a.name.localeCompare(b.name, "de"); });
-      var teil = leute.slice(0, rest); rest -= teil.length;
-      html += '<section class="zv-gruppe" style="--zv-farbe:' + (ZV_FARBE[g] || "#777") + '"><h3>' + esc(g) + " <small>" + leute.length + "</small></h3>"
-        + '<ul class="zv-leute">' + teil.map(function (b) {
-          return '<li class="zv-person' + (q && b.name.toLowerCase() === q ? " zv-person-treffer" : "") + '"><span class="zv-initiale" aria-hidden="true">' + esc(b.name.replace(/^[^A-Za-z0-9]+/, "").charAt(0).toUpperCase() || "?") + "</span>"
-            + '<span class="zv-person-txt"><span class="zv-person-name">' + esc(b.name) + '</span><span class="zv-person-rolle">' + esc(b.rolle) + "</span></span>"
-            + '<span class="zv-person-tag">Tag ' + b.tag + "</span></li>";
-        }).join("") + "</ul></section>";
+    if (zvGruppe === "beruf") { $("zv-bewohner").innerHTML = zvNachBeruf(treffer, q); return; }
+    // flat: supporters first (higher tier first), then the move-in order; a typed name that starts with the search first
+    var liste = treffer.slice().sort(function (a, b) {
+      return (q ? (b.name.toLowerCase().indexOf(q) === 0) - (a.name.toLowerCase().indexOf(q) === 0) : 0) || (b.patreon || 0) - (a.patreon || 0);
     });
-    if (treffer.length > zvZeigen) html += '<p class="zv-mehr"><button type="button" class="chip" id="zv-mehr">Weitere ' + (treffer.length - zvZeigen) + " anzeigen</button></p>";
+    var html = '<ul class="zv-leute">' + liste.slice(0, zvZeigen).map(function (b) { return zvPerson(b, q); }).join("") + "</ul>";
+    if (liste.length > zvZeigen) html += '<p class="zv-mehr"><button type="button" class="chip" id="zv-mehr">Weitere ' + (liste.length - zvZeigen) + " anzeigen</button></p>";
     $("zv-bewohner").innerHTML = html;
+  }
+  // by role, like the village's "Nach Beruf": the groups fold open, inside each role (biggest first) with its people
+  function zvNachBeruf(treffer, q) {
+    return (ZV.gruppen || []).map(function (g) {
+      var leute = treffer.filter(function (b) { return b.gruppe === g; });
+      if (!leute.length) return "";
+      var rollen = {};
+      leute.forEach(function (b) { (rollen[b.rolle] = rollen[b.rolle] || []).push(b); });
+      var namen = Object.keys(rollen).sort(function (a, b) { return rollen[b].length - rollen[a].length || a.localeCompare(b, "de"); });
+      return '<details class="gruppe zv-gruppe-auf" style="--zv-farbe:' + (ZV_FARBE[g] || "#777") + '"' + (q ? " open" : "") + '><summary><span class="zv-gruppe-titel">' + esc(g) + "</span><small>" + leute.length + (leute.length === 1 ? " Überlebender" : " Überlebende") + "</small></summary>"
+        + '<div class="gruppe-innen">' + namen.map(function (n) {
+          return "<div><h4>" + esc(n) + " (" + rollen[n].length + ')</h4><ul class="zv-leute">' + rollen[n].sort(function (a, b) { return (b.patreon || 0) - (a.patreon || 0) || a.name.localeCompare(b.name, "de"); }).map(function (b) { return zvPerson(b, q); }).join("") + "</ul></div>";
+        }).join("") + "</div></details>";
+    }).join("");
   }
   document.addEventListener("click", function (ev) {
     var c = ev.target.closest("[data-zvgruppe]");

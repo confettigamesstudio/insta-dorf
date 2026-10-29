@@ -459,6 +459,12 @@ button.zv-karte:hover, button.zv-karte:focus-visible { border-color: #9a3b2a; ou
 .zv-person-rolle { color: var(--leise); font-size: 14px; line-height: 1.3; }
 .zv-person-tag { font: 700 11px var(--body); text-transform: uppercase; letter-spacing: .04em; color: var(--leise); border: 1px solid var(--linie); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
 .zv-mehr { margin: 0; text-align: center; }
+.zv-person.sup { border-color: var(--gold); }
+.zv-person.sup3 { border-color: var(--violett); }
+.zv-person-name .marke { margin-left: 6px; vertical-align: 1px; }
+.zv-gruppe-auf .zv-gruppe-titel { display: inline-flex; align-items: center; gap: 8px; }
+.zv-gruppe-auf .zv-gruppe-titel::before { content: ""; width: 12px; height: 12px; border-radius: 4px; background: var(--zv-farbe); }
+.zv-gruppe-auf .gruppe-innen .zv-person { background: var(--bg); }
 /* phone: the six tabs as a calm 3 x 2 grid instead of a lonely second row */
 @media (max-width: 520px) { .zv-leiste .reiter { display: grid; grid-template-columns: repeat(3, 1fr); overflow-x: visible; gap: 0; }
   .zv-leiste .reiter-knopf, .zv-leiste .reiter-knopf.zv-bald { font-size: 15px; padding: 9px 4px 7px; text-align: center; line-height: 1.15; min-height: 44px; }
