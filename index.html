@@ -10,7 +10,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Das Instagram-Dorf: die Geschichte jedes Tages, alle Bewohner mit Profil und das Lager.">
 <link rel="stylesheet" href="schrift/schriften.css">
-<link rel="stylesheet" href="style.css?v=f9918393">
+<link rel="stylesheet" href="style.css?v=d5871b24">
 
 <section class="welten" id="welten" aria-labelledby="welten-titel" hidden>
   <div class="welten-innen">
@@ -33,6 +33,15 @@
           <span class="welt-los welt-los-zombie">Ins Camp →</span>
         </span>
       </button>
+      <!-- Battle Insta Royale (30.10.2026, live since 31.10.2026) -->
+      <button type="button" class="welt welt-battle" id="welt-battle" data-umami-event="Welt" data-umami-event-welt="Battle Insta Royale">
+        <span class="welt-bild" aria-hidden="true"></span>
+        <span class="welt-text">
+          <span class="welt-logo">Battle Insta Royale</span>
+          <span class="welt-unter">Das erste Instagram-Battle-Royale: Kommentiere, wer und was du bist, und du stehst auf der Karte. Die Zone wird kleiner, bis nur noch einer übrig ist.</span>
+          <span class="welt-los welt-los-battle">Auf die Karte →</span>
+        </span>
+      </button>
     </div>
   </div>
 </section>
@@ -42,6 +51,7 @@
     <span class="weltleiste-titel">Welt:</span>
     <button type="button" class="weltknopf aktiv" id="welt-wechseln-dorf" aria-current="true">🏡 Insta-Dorf</button>
     <button type="button" class="weltknopf" id="welt-wechseln-zombie">🧟 Zombieville</button>
+    <button type="button" class="weltknopf" id="welt-wechseln-battle">🗺️ Battle Insta Royale</button>
     <button type="button" class="weltknopf weltknopf-alle" id="welten-zurueck">Alle Welten</button>
   </div>
 </nav>
@@ -180,6 +190,118 @@
   </main>
 </div>
 
+<!-- Battle Insta Royale (30.10.2026, live since 31.10.2026): data daten/battleroyale.json (BattleInstaRoyale/Webseite/export.py), map bilder_br/karte.webp. Only names + roles, never comment texts. -->
+<div class="br" id="battleroyale" hidden>
+  <header class="kopf br-kopf">
+    <div class="kopf-bild br-kopf-bild" aria-hidden="true"></div>
+    <div class="huelle kopf-innen">
+      <p class="kicker">Das erste Instagram-Battle-Royale</p>
+      <h1>Battle Insta Royale</h1>
+      <p class="unter">Ein Kommentar, und du stehst auf der Karte. Jeden Tag ein Video, die Zone wird kleiner, bis nur noch einer übrig ist. Hier siehst du, wo du gerade bist.</p>
+      <p class="br-status" id="br-status">…</p>
+      <dl class="zahlen">
+        <div><dt>Tag</dt><dd id="br-tag">0</dd></div>
+        <div><dt>Noch am Leben</dt><dd id="br-lebend">0</dd></div>
+        <div><dt>Ausgeschieden</dt><dd id="br-ausgeschieden">0</dd></div>
+      </dl>
+    </div>
+  </header>
+  <nav class="br-leiste" aria-label="Bereiche in Battle Insta Royale">
+    <div class="huelle reiter" role="tablist">
+      <button type="button" role="tab" class="reiter-knopf" id="br-tab-karte" data-brtab="karte" aria-controls="br-panel-karte" aria-selected="true" data-umami-event="Battle Royale Reiter" data-umami-event-reiter="Karte">Karte</button>
+      <button type="button" role="tab" class="reiter-knopf" id="br-tab-teilnehmer" data-brtab="teilnehmer" aria-controls="br-panel-teilnehmer" aria-selected="false" data-umami-event="Battle Royale Reiter" data-umami-event-reiter="Teilnehmer">Teilnehmer</button>
+      <button type="button" role="tab" class="reiter-knopf" id="br-tab-chronik" data-brtab="chronik" aria-controls="br-panel-chronik" aria-selected="false" data-umami-event="Battle Royale Reiter" data-umami-event-reiter="Chronik">Chronik</button>
+      <button type="button" role="tab" class="reiter-knopf" id="br-tab-mitmachen" data-brtab="mitmachen" aria-controls="br-panel-mitmachen" aria-selected="false" data-umami-event="Battle Royale Reiter" data-umami-event-reiter="Mitmachen">Mitmachen</button>
+    </div>
+  </nav>
+  <main class="huelle br-main">
+    <p class="br-beispiel" id="br-beispiel" hidden>Testdaten: Diese Namen sind Platzhalter, die Runde hat noch nicht begonnen.</p>
+
+    <div class="br-panel" id="br-panel-karte" role="tabpanel" aria-labelledby="br-tab-karte">
+      <section class="br-block" aria-label="Die Karte">
+        <div class="br-suchleiste">
+          <label for="br-suche" class="sr">Deinen Insta-Namen suchen</label>
+          <input id="br-suche" type="search" placeholder="Deinen Insta-Namen suchen, dein Marker leuchtet auf" autocomplete="off" spellcheck="false">
+          <p class="hinweis-klein" id="br-suche-treffer" aria-live="polite"></p>
+        </div>
+        <div class="br-karte" id="br-karte-box">
+          <img id="br-karte-bild" src="bilder_br/karte.webp" alt="Die Karte von Battle Insta Royale: 50 Orte auf einem Raster von A bis P und 1 bis 16" width="2000" height="2279" decoding="async">
+          <canvas id="br-canvas" aria-hidden="true"></canvas>
+        </div>
+        <div class="br-legende" id="br-legende">
+          <span><i class="br-l-zone"></i>Zone heute</span><span><i class="br-l-zone-morgen"></i>Zone morgen</span>
+          <span><i class="br-l-bombe"></i>Bomben heute</span><span><i class="br-l-bombe-morgen"></i>Bomben morgen</span>
+          <span><i class="br-l-mine"></i>Minenfeld entdeckt</span><span><i class="br-l-marker"></i>Teilnehmer</span>
+        </div>
+        <div class="br-schalter">
+          <label><input type="checkbox" id="br-tote"> Ausgeschiedene zeigen</label>
+          <label><input type="checkbox" id="br-namen"> Namen an den Markern</label>
+        </div>
+        <div class="br-info" id="br-info" hidden></div>
+        <p class="hinweis-klein">Tippe auf einen Ort oder einen Marker. Stand: der zuletzt gepostete Tag. Minenfelder erscheinen erst, wenn jemand drauftritt.</p>
+      </section>
+      <section class="br-block" id="br-ansage-block" aria-labelledby="br-ansage-titel" hidden>
+        <h2 id="br-ansage-titel">Ansage für morgen</h2>
+        <ul class="br-ansage" id="br-ansage"></ul>
+      </section>
+    </div>
+
+    <div class="br-panel" id="br-panel-teilnehmer" role="tabpanel" aria-labelledby="br-tab-teilnehmer" hidden>
+      <div class="suchleiste br-suchleiste2">
+        <label for="br-suche2" class="sr">Insta-Namen oder Rolle suchen</label>
+        <input id="br-suche2" type="search" placeholder="Insta-Namen oder Rolle suchen" autocomplete="off" spellcheck="false">
+        <div class="filter" id="br-filter" role="group" aria-label="Filter"></div>
+      </div>
+      <p class="treffer" id="br-treffer" aria-live="polite"></p>
+      <div class="br-tabelle-huelle">
+        <table class="br-tabelle" id="br-tabelle">
+          <thead><tr>
+            <th scope="col"><button type="button" data-brsort="name">Name</button></th>
+            <th scope="col"><button type="button" data-brsort="rolle">Rolle</button></th>
+            <th scope="col" class="br-num"><button type="button" data-brsort="kills">Kills</button></th>
+            <th scope="col"><button type="button" data-brsort="status">Status</button></th>
+            <th scope="col"><button type="button" data-brsort="zelle">Sektor</button></th>
+          </tr></thead>
+          <tbody id="br-tbody"></tbody>
+        </table>
+      </div>
+      <button type="button" class="knopf br-knopf" id="br-mehr" hidden>Mehr anzeigen</button>
+    </div>
+
+    <div class="br-panel" id="br-panel-chronik" role="tabpanel" aria-labelledby="br-tab-chronik" hidden>
+      <div id="br-chronik-liste"><p class="hinweis-klein">Noch kein Tag gespielt.</p></div>
+    </div>
+
+    <div class="br-panel" id="br-panel-mitmachen" role="tabpanel" aria-labelledby="br-tab-mitmachen" hidden>
+      <section class="br-block" aria-labelledby="br-mitmachen-titel">
+        <h2 id="br-mitmachen-titel">So machst du mit</h2>
+        <ol class="zv-schritte">
+          <li><strong>Folge <a href="https://www.instagram.com/reisendegedanken/" target="_blank" rel="noopener">@reisendegedanken</a></strong> auf Instagram.</li>
+          <li><strong>Kommentiere unter dem neuesten Video, wer und was du bist:</strong> Soldatin, Bäcker, Ninja, Krankenpfleger … egal was.</li>
+          <li><strong>Am nächsten Tag</strong> landest du mit deinem Instagram-Namen auf der Karte. Wo, entscheidet deine Rolle und ein bisschen Glück.</li>
+        </ol>
+        <p class="hinweis-klein">Wer kommentiert und dem Kanal folgt, ist am nächsten Tag dabei. Hier erscheinen nur dein Name und deine Rolle, nie der Kommentar selbst.</p>
+      </section>
+      <section class="br-block" aria-labelledby="br-regeln-titel">
+        <h2 id="br-regeln-titel">Die Regeln in drei Sätzen</h2>
+        <ul class="br-regeln">
+          <li><strong>Zone:</strong> Die blaue Wand rückt jeden Tag näher. Wer draußen bleibt, scheidet aus.</li>
+          <li><strong>Bomben:</strong> Jeden Tag sagen wir an, wo morgen die Bomben fallen. Wer bleibt, hat Pech.</li>
+          <li><strong>Minen:</strong> Irgendwo liegen Minenfelder. Wo, verraten wir nicht. Erst wenn jemand drauftritt, steht es hier.</li>
+        </ul>
+        <p class="hinweis-klein">Niemand lootet, niemand steuert seine Figur selbst: Was passiert, entscheidet jeden Tag die Welt. Ausgeschiedene bleiben namentlich gelistet.</p>
+      </section>
+    </div>
+
+    <aside class="supporter-leiste zv-patreon">
+      <span class="supporter-krone">♛</span>
+      <p><strong>Krone an deiner Figur + Einblicke hinter die Kulissen?</strong> Battle Insta Royale läuft über dasselbe Patreon wie das Insta-Dorf.</p>
+      <a class="knopf" href="https://www.patreon.com/ReisendeGedanken" target="_blank" rel="noopener" data-umami-event="Patreon" data-umami-event-ort="battleroyale-leiste">Zu Patreon</a>
+    </aside>
+  </main>
+</div>
+
+
 <header class="kopf">
   <div class="kopf-bild" aria-hidden="true"></div>
   <div class="huelle kopf-innen">
@@ -310,7 +432,7 @@
 
 <script type="importmap">{ "imports": { "three": "./lib/three.module.min.js" } }</script>
 <script defer src="https://cloud.umami.is/script.js" data-website-id="80cb14ef-1eda-40cc-8519-9f694c1fff23" data-domains="instadorf.de"></script>
-<script src="app.js?v=102fadd1"></script>
+<script src="app.js?v=3dcab031"></script>
 
 </body>
 </html>

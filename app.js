@@ -733,3 +733,226 @@
   var bz = $("welt-wechseln-zombie"); if (bz) bz.addEventListener("click", function () { welt("zombieville"); });
   var bz2 = $("welten-zurueck"); if (bz2) bz2.addEventListener("click", function () { zeigen(true); });
 })();
+
+/* Battle Insta Royale (30.10.2026): the third world, prepared and hidden. This block does nothing while #battleroyale is not in the
+   DOM (its markup is commented out in index.html until Thomas gives the OK). Data: daten/battleroyale.json, written by
+   BattleInstaRoyale/Webseite/export.py - only names + roles as commented, positions, kills, status; never comment texts, never
+   undiscovered minefields. Tabs: Karte (map picture + canvas overlay: zone, bomb cells, discovered minefields, one marker per
+   participant, search highlights your own marker), Teilnehmer (sortable table), Chronik, Mitmachen. */
+(function () {
+  "use strict";
+  var br = document.getElementById("battleroyale"); if (!br) return;
+  var $ = function (id) { return document.getElementById(id); };
+  var w = $("welten"), zv = $("zombieville"), img = $("br-karte-bild"), cv = $("br-canvas");
+  var D = null, geladen = false, TABS = ["karte", "teilnehmer", "chronik", "mitmachen"], tab = "karte";
+  var hervor = null, sort = { key: "kills", dir: -1 }, filter = "alle", gezeigt = 200, pulse = 0, raf = null;
+  var display = (getComputedStyle(document.documentElement).getPropertyValue("--display") || "sans-serif").trim();
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function zaehlen(name, daten) { try { if (window.umami && window.umami.track) window.umami.track(name, daten || {}); } catch (e) { /* never break the page */ } }
+  var wahl = $("welt-battle"); if (wahl) wahl.parentNode.classList.add("welten-drei");
+
+  // ---- world switching, hand in hand with the chooser code above (dorf / zombieville) without touching it
+  function an() {
+    br.hidden = false;
+    if (zv) zv.hidden = true;
+    document.documentElement.classList.remove("welt-zv");
+    document.documentElement.classList.add("welt-br");
+    ["welt-wechseln-dorf", "welt-wechseln-zombie"].forEach(function (id) { var b = $(id); if (b) { b.classList.remove("aktiv", "weltknopf-zv"); b.removeAttribute("aria-current"); } });
+    var b = $("welt-wechseln-battle"); if (b) { b.classList.add("aktiv", "weltknopf-br"); b.setAttribute("aria-current", "true"); }
+    document.title = "Battle Insta Royale";
+    if (w) { w.hidden = true; document.documentElement.style.overflow = ""; }
+    if (!geladen) laden();
+    zeigeTab(tab, false);
+    window.scrollTo(0, 0);
+  }
+  function aus() {
+    br.hidden = true;
+    document.documentElement.classList.remove("welt-br");
+    var b = $("welt-wechseln-battle"); if (b) { b.classList.remove("aktiv", "weltknopf-br"); b.removeAttribute("aria-current"); }
+    if (/^#br-/.test(location.hash)) { try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { /* preview frame */ } }
+  }
+  ["welt-dorf", "welt-zombie", "welt-wechseln-dorf", "welt-wechseln-zombie"].forEach(function (id) { var b = $(id); if (b) b.addEventListener("click", aus); });
+  ["welt-battle", "welt-wechseln-battle"].forEach(function (id) { var b = $(id); if (b) b.addEventListener("click", function () { zaehlen("Welt", { welt: "Battle Insta Royale" }); an(); }); });
+
+  function zeigeTab(name, merken) {
+    if (TABS.indexOf(name) < 0) name = "karte";
+    tab = name;
+    TABS.forEach(function (t) { var p = $("br-panel-" + t), k = $("br-tab-" + t); if (p) p.hidden = t !== name; if (k) k.setAttribute("aria-selected", t === name ? "true" : "false"); });
+    if (merken !== false) { try { history.replaceState(null, "", "#br-" + name); } catch (e) { /* preview frame */ } }
+    if (name === "karte") zeichnen();
+  }
+  br.addEventListener("click", function (ev) {
+    var t = ev.target.closest("[data-brtab]"); if (t) { zaehlen("Battle Royale Reiter", { reiter: t.getAttribute("data-brtab") }); zeigeTab(t.getAttribute("data-brtab")); return; }
+    var s = ev.target.closest("[data-brsort]"); if (s) { var k = s.getAttribute("data-brsort"); if (sort.key === k) sort.dir = -sort.dir; else { sort.key = k; sort.dir = k === "kills" ? -1 : 1; } tabelle(); return; }
+    var f = ev.target.closest("[data-brfilter]"); if (f) { filter = f.getAttribute("data-brfilter"); gezeigt = 200; zaehlen("Battle Royale Filter", { filter: filter }); tabelle(); return; }
+    var n = ev.target.closest("[data-brname]"); if (n) { zeigeTab("karte"); hervorheben(n.getAttribute("data-brname")); $("br-karte-box").scrollIntoView({ block: "start" }); return; }
+    if (ev.target.closest("#br-mehr")) { gezeigt += 300; tabelle(); }
+  });
+
+  function laden() {
+    geladen = true;
+    fetch("daten/battleroyale.json", { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
+      D = d;
+      $("br-tag").textContent = d.tag; $("br-lebend").textContent = d.lebend; $("br-ausgeschieden").textContent = d.ausgeschieden;
+      $("br-status").textContent = d.status + (d.finale ? " · " + d.finale : "");
+      $("br-beispiel").hidden = !d.beispiel;
+      ansage(); tabelle(); chronik(); zeichnen();
+    }).catch(function () { geladen = false; $("br-status").textContent = "Die Daten konnten gerade nicht geladen werden. Lade die Seite bitte neu."; });
+  }
+
+  // ---- the map: picture + canvas overlay in grid coordinates (0..8, y downwards), the grid's pixel box comes from the export
+  function raster() { var R = D.karte.bild_raster, s = cv.width / R.breite; return { s: s, zelle: R.zelle * s, px: function (x, y) { return [(R.x0 + x * R.zelle) * s, (R.y0 + y * R.zelle) * s]; } }; }
+  function farbe(name) { var h = 0; for (var i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0; return "hsl(" + (h % 360) + " 85% " + (42 + (h >> 8) % 16) + "%)"; }
+  function zelleVon(m) { var S = D.karte.spalten, n = S.length; return S[Math.max(0, Math.min(n - 1, Math.floor(m[0])))] + Math.max(1, Math.min(D.karte.hoehe, Math.floor(m[1]) + 1)); }
+  function marker(g, R, t, rad, dpr, name) {
+    var p = R.px(t.x, t.y);
+    g.beginPath(); g.arc(p[0], p[1], rad, 0, Math.PI * 2); g.fillStyle = farbe(t.name); g.fill();
+    g.lineWidth = 2 * dpr; g.strokeStyle = t.patreon ? "#f2c04a" : "#fff"; g.stroke();
+    if (t.patreon) { g.font = Math.round(rad * 1.7) + "px serif"; g.textAlign = "center"; g.textBaseline = "bottom"; g.fillStyle = "#f2c04a"; g.fillText("♛", p[0], p[1] - rad * 0.8); }
+    if (name) { g.font = "700 " + Math.round(rad * 1.5) + "px " + display; g.textAlign = "center"; g.textBaseline = "top"; g.lineWidth = 3 * dpr; g.strokeStyle = "rgba(0,0,0,.75)"; g.fillStyle = "#fff"; g.strokeText(t.name, p[0], p[1] + rad * 1.3); g.fillText(t.name, p[0], p[1] + rad * 1.3); }
+  }
+  function zeichnen() {
+    if (!D || !img.complete || !img.naturalWidth || tab !== "karte" || br.hidden) return;
+    var cw = img.clientWidth, ch = img.clientHeight; if (!cw) return;
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
+    var g = cv.getContext("2d"), R = raster(); g.clearRect(0, 0, cv.width, cv.height);
+    var g0 = R.px(0, 0), g1 = R.px(D.karte.breite, D.karte.hoehe);
+    var Z = D.zone;
+    if (Z && Z.radius != null) {   // everything outside the circle sinks into the blue
+      var c = R.px(Z.mitte[0], Z.mitte[1]), r = Z.radius * R.zelle;
+      g.save(); g.beginPath(); g.rect(g0[0], g0[1], g1[0] - g0[0], g1[1] - g0[1]); g.arc(c[0], c[1], r, 0, Math.PI * 2, true); g.fillStyle = "rgba(20, 50, 110, .45)"; g.fill("evenodd"); g.restore();
+      g.lineWidth = 5 * dpr; g.strokeStyle = "#2f8cff"; g.beginPath(); g.arc(c[0], c[1], r, 0, Math.PI * 2); g.stroke();
+      g.lineWidth = 2 * dpr; g.strokeStyle = "rgba(255,255,255,.85)"; g.beginPath(); g.arc(c[0], c[1], r + 4 * dpr, 0, Math.PI * 2); g.stroke();
+      if (Z.naechste) { var cn = R.px(Z.naechste.mitte[0], Z.naechste.mitte[1]); g.setLineDash([10 * dpr, 8 * dpr]); g.lineWidth = 3 * dpr; g.strokeStyle = "#9ed0ff"; g.beginPath(); g.arc(cn[0], cn[1], Z.naechste.radius * R.zelle, 0, Math.PI * 2); g.stroke(); g.setLineDash([]); }
+    }
+    function zelleBox(zx, zy, fill, stroke, text, dash) {
+      var p = R.px(zx, zy);
+      g.save(); if (dash) g.setLineDash([8 * dpr, 6 * dpr]);
+      g.fillStyle = fill; g.fillRect(p[0], p[1], R.zelle, R.zelle);
+      g.lineWidth = 3 * dpr; g.strokeStyle = stroke; g.strokeRect(p[0] + 1.5 * dpr, p[1] + 1.5 * dpr, R.zelle - 3 * dpr, R.zelle - 3 * dpr);
+      g.restore();
+      if (text) { g.font = "700 " + Math.round(R.zelle * 0.17) + "px " + display; g.fillStyle = "#fff"; g.textAlign = "center"; g.textBaseline = "middle"; g.lineWidth = 4 * dpr; g.strokeStyle = "rgba(0,0,0,.7)"; g.strokeText(text, p[0] + R.zelle / 2, p[1] + R.zelle * 0.5); g.fillText(text, p[0] + R.zelle / 2, p[1] + R.zelle * 0.5); }
+    }
+    (D.minen_entdeckt || []).forEach(function (m) {   // yellow and black stripes: a field somebody found the hard way
+      var p = R.px(m.x, m.y);
+      g.save(); g.beginPath(); g.rect(p[0], p[1], R.zelle, R.zelle); g.clip(); g.fillStyle = "rgba(255, 210, 0, .35)"; g.fillRect(p[0], p[1], R.zelle, R.zelle);
+      g.strokeStyle = "rgba(0,0,0,.55)"; g.lineWidth = 6 * dpr;
+      for (var i = -2; i < 4; i++) { g.beginPath(); g.moveTo(p[0] + i * R.zelle / 3, p[1] + R.zelle); g.lineTo(p[0] + i * R.zelle / 3 + R.zelle, p[1]); g.stroke(); }
+      g.restore(); zelleBox(m.x, m.y, "rgba(0,0,0,0)", "#ffd200", "MINEN");
+    });
+    var B = D.bombenzonen || {};
+    if (B.heute) zelleBox(B.heute.x, B.heute.y, "rgba(230, 40, 40, .45)", "#ff3b3b", "BOMBEN");
+    if (B.morgen) zelleBox(B.morgen.x, B.morgen.y, "rgba(255, 140, 0, .25)", "#ff8c00", "MORGEN", true);
+    var lebende = D.teilnehmer.filter(function (t) { return t.lebt; }), tote = $("br-tote").checked ? D.teilnehmer.filter(function (t) { return !t.lebt; }) : [];
+    var rad = Math.max(2.5 * dpr, Math.min(9 * dpr, R.zelle * 0.11 * (lebende.length > 400 ? 0.5 : lebende.length > 120 ? 0.7 : 1))), namen = $("br-namen").checked && lebende.length <= 80;
+    tote.forEach(function (t) { var p = R.px(t.x, t.y); g.strokeStyle = "rgba(30,30,30,.7)"; g.lineWidth = 2.5 * dpr; g.beginPath(); g.moveTo(p[0] - rad * .8, p[1] - rad * .8); g.lineTo(p[0] + rad * .8, p[1] + rad * .8); g.moveTo(p[0] + rad * .8, p[1] - rad * .8); g.lineTo(p[0] - rad * .8, p[1] + rad * .8); g.stroke(); });
+    lebende.forEach(function (t) { if (t.name !== hervor) marker(g, R, t, rad, dpr, namen); });
+    var hv = D.teilnehmer.filter(function (t) { return t.name === hervor; })[0];
+    if (hv) {   // your own marker: big, with two rings that breathe for a moment
+      var p = R.px(hv.x, hv.y), puls = 1 + 0.25 * Math.sin(pulse / 8);
+      g.beginPath(); g.arc(p[0], p[1], rad * 2.6 * puls, 0, Math.PI * 2); g.strokeStyle = "#fff"; g.lineWidth = 4 * dpr; g.stroke();
+      g.beginPath(); g.arc(p[0], p[1], rad * 2.6 * puls + 4 * dpr, 0, Math.PI * 2); g.strokeStyle = "#ff7a1a"; g.lineWidth = 3 * dpr; g.stroke();
+      marker(g, R, hv, rad * 1.6, dpr, true);
+    }
+  }
+  function hervorheben(name) {
+    hervor = name; if (raf) cancelAnimationFrame(raf);
+    var start = performance.now();
+    (function schritt(now) { pulse = (now - start) / 16; zeichnen(); if (now - start < 2600 && hervor) raf = requestAnimationFrame(schritt); })(start);
+    var t = D && D.teilnehmer.filter(function (x) { return x.name === name; })[0];
+    if (t) info(t);
+  }
+  function status(t) { return t.lebt ? "lebt" : "ausgeschieden an Tag " + t.ausgeschieden_tag; }
+  function info(t) {
+    var el = $("br-info"); el.hidden = false;
+    el.innerHTML = '<p><span class="br-punkt" style="background:' + farbe(t.name) + '"></span><strong>' + esc(t.name) + "</strong>" + (t.patreon ? '<span class="marke sup' + (t.patreon >= 3 ? " sup3" : "") + '">Supporter</span>' : "")
+      + " · " + esc(t.rolle) + " · " + t.kills + (t.kills === 1 ? " Kill" : " Kills") + " · " + status(t) + " · Sektor " + esc(t.zelle) + (t.ort ? " (" + esc(t.ort) + ")" : "") + " · dabei seit Tag " + t.einzug_tag + "</p>";
+  }
+  function ortInfo(o) {
+    var da = D.teilnehmer.filter(function (t) { return t.lebt && t.zelle === o.zelle; }).map(function (t) { return '<button type="button" class="name-link" data-brname="' + esc(t.name) + '">' + esc(t.name) + "</button>"; });
+    var punkte = ""; for (var i = 0; i < 5; i++) punkte += '<i class="br-gefahr' + (i < o.gefahr ? " an" : "") + '"></i>';
+    var el = $("br-info"); el.hidden = false;
+    el.innerHTML = '<p class="etikett">' + esc(o.typ_name) + " · Sektor " + esc(o.zelle) + ' · Gefahr <span class="br-gefahr-reihe">' + punkte + "</span> " + esc(D.karte.gefahr_stufen[o.gefahr] || "") + "</p><h3>" + esc(o.name) + "</h3><p>" + esc(o.beschreibung) + "</p>"
+      + '<p class="hinweis-klein">' + (da.length ? "Gerade hier (" + da.length + "): " + da.join(", ") : "Gerade ist niemand hier.") + "</p>";
+  }
+  cv.addEventListener("click", function (ev) {
+    if (!D) return;
+    var rect = cv.getBoundingClientRect(), R = raster(), Rb = D.karte.bild_raster, dpr = cv.width / rect.width;
+    var gx = (((ev.clientX - rect.left) * dpr) / R.s - Rb.x0) / Rb.zelle, gy = (((ev.clientY - rect.top) * dpr) / R.s - Rb.y0) / Rb.zelle;
+    var best = null, bd = 0.3;   // the nearest marker first, then the nearest place
+    D.teilnehmer.forEach(function (t) { if (!t.lebt && !$("br-tote").checked) return; var d = Math.hypot(t.x - gx, t.y - gy); if (d < bd) { bd = d; best = t; } });
+    if (best) { zaehlen("Battle Royale Marker"); hervorheben(best.name); return; }
+    var ort = null; bd = 0.5;
+    D.karte.orte.forEach(function (o) { var d = Math.hypot(o.x - gx, o.y - gy); if (d < bd) { bd = d; ort = o; } });
+    if (ort) { zaehlen("Battle Royale Ort", { ort: ort.name }); ortInfo(ort); } else { hervor = null; $("br-info").hidden = true; zeichnen(); }
+  });
+  $("br-suche").addEventListener("input", function () {
+    if (!D) return;
+    var q = this.value.trim().toLowerCase().replace(/^@/, ""), tr = $("br-suche-treffer");
+    if (!q) { hervor = null; tr.textContent = ""; $("br-info").hidden = true; zeichnen(); return; }
+    var treffer = D.teilnehmer.filter(function (t) { return t.name.toLowerCase().indexOf(q) >= 0; });
+    var genau = treffer.filter(function (t) { return t.name.toLowerCase() === q; })[0] || (treffer.length === 1 ? treffer[0] : null);
+    if (genau) { tr.textContent = ""; zaehlen("Battle Royale Suche", { gefunden: "ja" }); hervorheben(genau.name); }
+    else tr.textContent = treffer.length ? treffer.length + " Namen passen, tipp weiter: " + treffer.slice(0, 6).map(function (t) { return t.name; }).join(", ") + (treffer.length > 6 ? " …" : "") : "Niemand gefunden. Noch nicht dabei? Kommentiere unter dem neuesten Video.";
+  });
+  img.addEventListener("load", zeichnen);
+  window.addEventListener("resize", function () { if (!br.hidden) zeichnen(); });
+  ["br-tote", "br-namen"].forEach(function (id) { $(id).addEventListener("change", zeichnen); });
+  function ansage() {
+    var L = [], Z = D.zone, B = D.bombenzonen || {};
+    if (Z && Z.naechste) L.push("Zone: Ab Tag " + Z.naechste.ab_tag + " schrumpft die blaue Wand auf Radius " + Z.naechste.radius + " Felder um Sektor " + zelleVon(Z.naechste.mitte) + ".");
+    if (B.morgen) L.push("Bomben: Morgen fallen Bomben auf " + (B.morgen.ort ? B.morgen.ort + " (" + B.morgen.zelle + ")" : "Sektor " + B.morgen.zelle) + ". Wer bleibt, riskiert alles.");
+    if (B.heute) L.push("Heute: Bomben auf " + (B.heute.ort || "Sektor " + B.heute.zelle) + ".");
+    $("br-ansage-block").hidden = !L.length; $("br-ansage").innerHTML = L.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("");
+  }
+
+  // ---- the table: name, role as commented, kills, status, sector - sortable, searchable, filters
+  function tabelle() {
+    if (!D) return;
+    var q = $("br-suche2").value.trim().toLowerCase().replace(/^@/, "");
+    var nSup = D.teilnehmer.filter(function (t) { return t.patreon; }).length;
+    $("br-filter").innerHTML = [["alle", "Alle · " + D.teilnehmer.length], ["lebend", "Lebend · " + D.lebend], ["raus", "Ausgeschieden · " + D.ausgeschieden], ["supporter", "Supporter" + (nSup ? " · " + nSup : "")]]
+      .map(function (p) { return '<button type="button" class="chip' + (filter === p[0] ? " aktiv" : "") + '" data-brfilter="' + p[0] + '">' + p[1] + "</button>"; }).join("");
+    var liste = D.teilnehmer.filter(function (t) {
+      if (filter === "lebend" && !t.lebt) return false; if (filter === "raus" && t.lebt) return false; if (filter === "supporter" && !t.patreon) return false;
+      return !q || t.name.toLowerCase().indexOf(q) >= 0 || t.rolle.toLowerCase().indexOf(q) >= 0;
+    });
+    var k = sort.key, dir = sort.dir;
+    liste.sort(function (a, b) {
+      var va, vb;
+      if (k === "kills") { va = a.kills; vb = b.kills; }
+      else if (k === "status") { va = a.lebt ? 0 : 1000 - a.ausgeschieden_tag; vb = b.lebt ? 0 : 1000 - b.ausgeschieden_tag; }
+      else if (k === "zelle") { va = a.zelle.slice(1) + a.zelle[0]; vb = b.zelle.slice(1) + b.zelle[0]; }
+      else { va = String(a[k] || "").toLowerCase(); vb = String(b[k] || "").toLowerCase(); }
+      if (va < vb) return -dir; if (va > vb) return dir;
+      return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1;
+    });
+    br.querySelectorAll("[data-brsort]").forEach(function (b) { b.parentNode.setAttribute("aria-sort", b.getAttribute("data-brsort") === k ? (dir > 0 ? "ascending" : "descending") : "none"); });
+    $("br-treffer").textContent = liste.length ? liste.length + " Teilnehmer" : (D.teilnehmer.length ? "Niemand gefunden." : "Noch niemand auf der Karte. Der Einzug beginnt mit Tag 1.");
+    $("br-tbody").innerHTML = liste.slice(0, gezeigt).map(function (t) {
+      return '<tr class="' + (t.lebt ? "" : "br-raus") + '"><td><button type="button" class="name-link" data-brname="' + esc(t.name) + '"><span class="br-punkt" style="background:' + farbe(t.name) + '"></span>' + esc(t.name) + "</button>"
+        + (t.patreon ? '<span class="marke sup' + (t.patreon >= 3 ? " sup3" : "") + '">Supporter</span>' : "") + "</td><td>" + esc(t.rolle) + '</td><td class="br-num">' + t.kills + "</td><td>"
+        + (t.lebt ? '<span class="br-lebt">lebt</span>' : '<span class="marke tot">raus</span> Tag ' + t.ausgeschieden_tag) + "</td><td>" + esc(t.zelle) + (t.ort ? " <small>" + esc(t.ort) + "</small>" : "") + "</td></tr>";
+    }).join("");
+    $("br-mehr").hidden = liste.length <= gezeigt;
+  }
+  $("br-suche2").addEventListener("input", function () { gezeigt = 200; tabelle(); });
+
+  // ---- the chronicle: one block per posted day, newest first (hand-written text when there is one, else the public events)
+  function chronik() {
+    var C = (D.chronik || []).slice().reverse();
+    if (!C.length) { $("br-chronik-liste").innerHTML = '<p class="hinweis-klein">Noch kein Tag gespielt. Tag 1 beginnt, sobald die Ersten auf der Karte landen.</p>'; return; }
+    $("br-chronik-liste").innerHTML = C.map(function (c) {
+      return '<section class="br-block br-tagblock"><p class="etikett">Tag ' + c.tag + (c.lebend != null ? " · noch " + c.lebend + " von " + c.gesamt + " am Leben" : "") + "</p><h2>" + esc(c.titel) + "</h2>"
+        + (c.absaetze || []).map(function (a) { return "<p>" + esc(a) + "</p>"; }).join("")
+        + (c.ausgeschieden && c.ausgeschieden.length ? '<p class="br-tag-raus"><strong>Ausgeschieden:</strong> ' + c.ausgeschieden.map(esc).join(", ") + "</p>" : "")
+        + (c.ereignisse && c.ereignisse.length ? '<details class="br-ereignisse"><summary>' + c.ereignisse.length + " Ereignisse</summary><ul>" + c.ereignisse.map(function (e) { return '<li><span class="br-zeit">' + esc(e.zeit) + "</span> " + esc(e.text) + "</li>"; }).join("") + "</ul></details>" : "")
+        + "</section>";
+    }).join("");
+  }
+
+  // a direct link (#br-karte, #br-teilnehmer) opens this world without the chooser
+  var h = decodeURIComponent(location.hash.slice(1));
+  if (/^br-/.test(h)) { tab = h.slice(3); an(); }
+})();
