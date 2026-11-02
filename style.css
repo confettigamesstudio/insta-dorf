@@ -545,3 +545,57 @@ html.welt-br .kopf:not(.br-kopf), html.welt-br .reiter-leiste, html.welt-br main
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .br-beispiel { background: #4a3a12; color: #ffd98a; } :root:not([data-theme="light"]) .br-tagblock .etikett { color: #ffb15c; } }
 :root[data-theme="dark"] .br-beispiel { background: #4a3a12; color: #ffd98a; }
 :root[data-theme="dark"] .br-tagblock .etikett { color: #ffb15c; }
+
+/* Das Labyrinth (01.11.2026, replaces Battle Insta Royale in the world chooser): hedge green, warm sand, fog */
+.welt-lab { cursor: pointer; outline: 3px solid transparent; transition: transform .15s, outline-color .15s; }
+.welt-lab:hover, .welt-lab:focus-visible { transform: translateY(-3px); outline-color: #f2c04a; }
+.welt-lab .welt-bild { background-image: url("bilder_lab/karte_nah.webp"); background-position: center 45%; }
+.welt-lab .welt-logo { color: #ffe7b0; }
+.welt-los-lab { background: #3f7a3a; }
+.weltknopf.aktiv.weltknopf-lab { background: #3f7a3a; border-color: #3f7a3a; color: #fff; }
+html.welt-lab .kopf:not(.lab-kopf), html.welt-lab .reiter-leiste, html.welt-lab main:not(.lab-main), html.welt-lab #supporter-leiste { display: none; }
+.lab-kopf { background: #1d2a22; }
+.lab-kopf-bild { background-image: url("bilder_lab/karte_nah.webp"); background-position: center 45%; }
+.lab-kopf-bild::after { background: linear-gradient(180deg, rgba(14, 24, 16, .35) 0%, rgba(14, 24, 16, .62) 45%, rgba(10, 18, 12, .93) 100%); }
+.lab-kopf h1 { color: #ffe7b0; }
+.lab-status { margin: 8px 0 0; font: 700 15px var(--display); color: #bfe3a0; }
+.lab-leiste { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 6; background: var(--bg); border-bottom: 2px solid var(--linie); }
+.lab-leiste .reiter-knopf[aria-selected="true"] { border-bottom-color: #3f7a3a; }
+.lab-main { gap: 22px; }
+.lab-panel { display: grid; gap: 22px; }
+.lab-panel[hidden] { display: none; }
+.lab-block { background: var(--flaeche); border-radius: 20px; padding: 22px clamp(16px, 4vw, 30px); box-shadow: var(--schatten); display: grid; gap: 12px; }
+.lab-block h2 { font-size: clamp(22px, 4.4vw, 30px); }
+.lab-kartenblock { padding: 14px; }
+.lab-karte { display: block; border-radius: 16px; overflow: hidden; background: #141c20; line-height: 0; }
+.lab-karte img { display: block; width: 100%; height: auto; }
+.lab-beispiel { margin: 0; padding: 10px 14px; border-radius: 12px; background: #fff3d6; color: #6b4a00; font-weight: 700; font-size: 14px; }
+.lab-optionen { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+@media (max-width: 560px) { .lab-optionen { grid-template-columns: 1fr; } }
+.lab-opt { display: grid; gap: 6px; padding: 14px; border-radius: 16px; border: 3px solid var(--c); background: color-mix(in srgb, var(--c) 14%, var(--flaeche)); }
+.lab-opt strong { font: 700 22px var(--display); }
+.lab-opt-links { --c: #40a8ff; } .lab-opt-geradeaus { --c: #e8b400; } .lab-opt-rechts { --c: #ff60a0; }
+.lab-opt-pfeil { font-size: 26px; line-height: 1; }
+.lab-opt.lab-zu { --c: #9aa39a; opacity: .7; }
+.lab-stimmen { font-size: 14px; color: var(--leise); font-weight: 700; }
+.lab-balken { height: 10px; border-radius: 6px; background: var(--linie); overflow: hidden; }
+.lab-balken i { display: block; height: 100%; background: var(--c); border-radius: 6px; }
+.lab-wind { font-size: 13px; font-weight: 700; color: #2f6f9f; }
+.lab-suchleiste input { font: inherit; font-size: 16px; padding: 12px 14px; border-radius: 14px; border: 2px solid var(--linie); background: var(--flaeche); color: var(--text); width: 100%; }
+.lab-tabelle-huelle { overflow-x: auto; background: var(--flaeche); border-radius: 16px; box-shadow: var(--schatten); }
+.lab-tabelle { width: 100%; border-collapse: collapse; min-width: 520px; font-size: 15px; }
+.lab-tabelle th, .lab-tabelle td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--linie); }
+.lab-tabelle th { background: var(--flaeche-2); font-family: var(--display); font-size: 14px; }
+.lab-tabelle .lab-num { text-align: right; font-variant-numeric: tabular-nums; }
+.lab-tabelle tr.lab-verletzt td:nth-child(3) { color: #c2410c; font-weight: 700; }
+.lab-tabelle tr.lab-ausgeschieden td { color: var(--leise); }
+.lab-knopf { background: #3f7a3a; color: #fff; }
+.lab-knopf:hover { background: #33652f; }
+.lab-tagblock .etikett { color: #3f7a3a; }
+.lab-ereignisse { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; font-size: 15px; }
+.lab-zeit { font-weight: 700; color: var(--leise); margin-right: 4px; }
+.lab-regeln { margin: 0; padding-left: 1.2em; display: grid; gap: 8px; }
+.lab-schluessel { background: linear-gradient(135deg, #fff6d8, #ffe7a3); color: #3b2c00; }
+.lab-schluessel h2, .lab-schluessel .etikett { color: #7a5600; }
+.lab-finder { margin: 0; padding-left: 1.1em; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .lab-tagblock .etikett { color: #9ed07f; } }

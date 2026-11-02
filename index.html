@@ -10,7 +10,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Das Instagram-Dorf: die Geschichte jedes Tages, alle Bewohner mit Profil und das Lager.">
 <link rel="stylesheet" href="schrift/schriften.css">
-<link rel="stylesheet" href="style.css?v=d5871b24">
+<link rel="stylesheet" href="style.css?v=524395c4">
 
 <section class="welten" id="welten" aria-labelledby="welten-titel" hidden>
   <div class="welten-innen">
@@ -33,13 +33,23 @@
           <span class="welt-los welt-los-zombie">Ins Camp →</span>
         </span>
       </button>
-      <!-- Battle Insta Royale (30.10.2026, live since 31.10.2026) -->
+      <!-- Battle Insta Royale (30.10.2026, discarded 01.11.2026 - replaced by Das Labyrinth; markup kept, see BR_FREIGEGEBEN in bauen.py)
       <button type="button" class="welt welt-battle" id="welt-battle" data-umami-event="Welt" data-umami-event-welt="Battle Insta Royale">
         <span class="welt-bild" aria-hidden="true"></span>
         <span class="welt-text">
           <span class="welt-logo">Battle Insta Royale</span>
           <span class="welt-unter">Das erste Instagram-Battle-Royale: Kommentiere, als was du kämpfst, und du stehst auf der Karte. Die Zone wird kleiner, bis nur noch einer übrig ist.</span>
           <span class="welt-los welt-los-battle">Auf die Karte →</span>
+        </span>
+      </button>
+      -->
+      <!-- Das Labyrinth (01.11.2026, LAB_FREIGEGEBEN in bauen.py) -->
+      <button type="button" class="welt welt-lab" id="welt-labyrinth" data-umami-event="Welt" data-umami-event-welt="Das Labyrinth">
+        <span class="welt-bild" aria-hidden="true"></span>
+        <span class="welt-text">
+          <span class="welt-logo">Das Labyrinth</span>
+          <span class="welt-unter">Wir sind in einem Labyrinth gefangen. Jeden Tag entscheidet ihr: links, rechts oder geradeaus – und Video für Video sehen wir ein Stück mehr davon.</span>
+          <span class="welt-los welt-los-lab">Ins Labyrinth →</span>
         </span>
       </button>
     </div>
@@ -51,7 +61,8 @@
     <span class="weltleiste-titel">Welt:</span>
     <button type="button" class="weltknopf aktiv" id="welt-wechseln-dorf" aria-current="true">🏡 Insta-Dorf</button>
     <button type="button" class="weltknopf" id="welt-wechseln-zombie">🧟 Zombieville</button>
-    <button type="button" class="weltknopf" id="welt-wechseln-battle">🗺️ Battle Insta Royale</button>
+    <!-- <button type="button" class="weltknopf" id="welt-wechseln-battle">🗺️ Battle Insta Royale</button> (discarded 01.11.2026) -->
+    <button type="button" class="weltknopf" id="welt-wechseln-labyrinth">🌿 Das Labyrinth</button>
     <button type="button" class="weltknopf weltknopf-alle" id="welten-zurueck">Alle Welten</button>
   </div>
 </nav>
@@ -190,7 +201,7 @@
   </main>
 </div>
 
-<!-- Battle Insta Royale (30.10.2026, live since 31.10.2026): data daten/battleroyale.json (BattleInstaRoyale/Webseite/export.py), map bilder_br/karte.webp. Only names + roles, never comment texts. -->
+<!-- Battle Insta Royale (30.10.2026, discarded 01.11.2026 and replaced by Das Labyrinth - the markup stays for later, switched off by this comment):
 <div class="br" id="battleroyale" hidden>
   <header class="kopf br-kopf">
     <div class="kopf-bild br-kopf-bild" aria-hidden="true"></div>
@@ -298,6 +309,111 @@
       <span class="supporter-krone">♛</span>
       <p><strong>Krone an deiner Figur + Einblicke hinter die Kulissen?</strong> Battle Insta Royale läuft über dasselbe Patreon wie das Insta-Dorf.</p>
       <a class="knopf" href="https://www.patreon.com/ReisendeGedanken" target="_blank" rel="noopener" data-umami-event="Patreon" data-umami-event-ort="battleroyale-leiste">Zu Patreon</a>
+    </aside>
+  </main>
+</div>
+-->
+
+<!-- Das Labyrinth (01.11.2026): data daten/labyrinth.json + map bilder_lab/karte*.webp, both from InstaLabyrinth/Webseite/export.py + Karte/karte_rendern.py.
+     Only what the group has walked or seen (the rest is fog), names + roles as commented, never comment texts. -->
+<div class="lab" id="labyrinth" hidden>
+  <header class="kopf lab-kopf">
+    <div class="kopf-bild lab-kopf-bild" aria-hidden="true"></div>
+    <div class="huelle kopf-innen">
+      <p class="kicker">Gefangen zwischen den Hecken</p>
+      <h1>Das Labyrinth</h1>
+      <p class="unter">Wir sind auf einer Lichtung aufgewacht, ringsum nur Hecken. Jeden Tag entscheidet ihr, wohin wir gehen: links, rechts oder geradeaus. Video für Video sehen wir ein Stück mehr.</p>
+      <p class="lab-status" id="lab-status">…</p>
+      <dl class="zahlen">
+        <div><dt>Tag</dt><dd id="lab-tag">0</dd></div>
+        <div><dt>In der Gruppe</dt><dd id="lab-gesamt">0</dd></div>
+        <div><dt>Felder erkundet</dt><dd id="lab-erkundet">0</dd></div>
+      </dl>
+    </div>
+  </header>
+  <nav class="lab-leiste" aria-label="Bereiche im Labyrinth">
+    <div class="huelle reiter" role="tablist">
+      <button type="button" role="tab" class="reiter-knopf" id="lab-tab-karte" data-labtab="karte" aria-controls="lab-panel-karte" aria-selected="true" data-umami-event="Labyrinth Reiter" data-umami-event-reiter="Karte">Karte</button>
+      <button type="button" role="tab" class="reiter-knopf" id="lab-tab-teilnehmer" data-labtab="teilnehmer" aria-controls="lab-panel-teilnehmer" aria-selected="false" data-umami-event="Labyrinth Reiter" data-umami-event-reiter="Gruppe">Die Gruppe</button>
+      <button type="button" role="tab" class="reiter-knopf" id="lab-tab-chronik" data-labtab="chronik" aria-controls="lab-panel-chronik" aria-selected="false" data-umami-event="Labyrinth Reiter" data-umami-event-reiter="Chronik">Chronik</button>
+      <button type="button" role="tab" class="reiter-knopf" id="lab-tab-mitmachen" data-labtab="mitmachen" aria-controls="lab-panel-mitmachen" aria-selected="false" data-umami-event="Labyrinth Reiter" data-umami-event-reiter="Mitmachen">Mitmachen</button>
+    </div>
+  </nav>
+  <main class="huelle lab-main">
+    <p class="lab-beispiel" id="lab-beispiel" hidden>Testdaten: Diese Namen sind Platzhalter.</p>
+
+    <div class="lab-panel" id="lab-panel-karte" role="tabpanel" aria-labelledby="lab-tab-karte">
+      <section class="lab-block lab-kartenblock" aria-label="Die Karte">
+        <div class="filter lab-ansicht" role="group" aria-label="Ansicht">
+          <button type="button" class="chip aktiv" data-labansicht="nah" aria-pressed="true">Nah dran</button>
+          <button type="button" class="chip" data-labansicht="voll" aria-pressed="false">Ganzes Labyrinth</button>
+        </div>
+        <a class="lab-karte" id="lab-karte-link" href="bilder_lab/karte_nah.webp" target="_blank" rel="noopener">
+          <img id="lab-karte-bild" src="bilder_lab/karte_nah.webp" alt="Die Karte des Labyrinths: die Lichtung, der Weg der Gruppe, alles andere im Nebel" decoding="async">
+        </a>
+        <p class="hinweis-klein">Nur was wir schon gesehen haben, der Rest liegt im Nebel. Tippen öffnet die Karte groß. Stand: der zuletzt gepostete Tag.</p>
+      </section>
+      <section class="lab-block lab-heute" id="lab-heute" aria-labelledby="lab-heute-titel" hidden>
+        <p class="etikett" id="lab-heute-etikett">Abstimmung</p>
+        <h2 id="lab-heute-titel">Heute: links, rechts oder geradeaus?</h2>
+        <ul class="lab-optionen" id="lab-optionen"></ul>
+        <p class="hinweis-klein" id="lab-abst-hinweis">Stimm in der Instagram-Umfrage ab <strong>und</strong> schreib die Richtung in die Kommentare – beides zählt. Der Stand wird von Hand nachgetragen.</p>
+      </section>
+      <section class="lab-block" id="lab-finale" hidden><h2 id="lab-finale-text"></h2></section>
+    </div>
+
+    <div class="lab-panel" id="lab-panel-teilnehmer" role="tabpanel" aria-labelledby="lab-tab-teilnehmer" hidden>
+      <div class="suchleiste lab-suchleiste">
+        <label for="lab-suche" class="sr">Insta-Namen oder Rolle suchen</label>
+        <input id="lab-suche" type="search" placeholder="Deinen Insta-Namen oder eine Rolle suchen" autocomplete="off" spellcheck="false">
+        <div class="filter" id="lab-filter" role="group" aria-label="Filter"></div>
+      </div>
+      <p class="treffer" id="lab-treffer" aria-live="polite"></p>
+      <div class="lab-tabelle-huelle">
+        <table class="lab-tabelle">
+          <thead><tr><th scope="col">Name</th><th scope="col">Rolle</th><th scope="col">Status</th><th scope="col" class="lab-num">Treffer</th><th scope="col" class="lab-num">Dabei seit</th></tr></thead>
+          <tbody id="lab-tbody"></tbody>
+        </table>
+      </div>
+      <button type="button" class="knopf lab-knopf" id="lab-mehr" hidden>Mehr anzeigen</button>
+      <p class="hinweis-klein">Im Labyrinth stirbt niemand. Wer zu schwer verletzt ist, wird von den anderen getragen und bleibt hier gelistet.</p>
+    </div>
+
+    <div class="lab-panel" id="lab-panel-chronik" role="tabpanel" aria-labelledby="lab-tab-chronik" hidden>
+      <div id="lab-chronik-liste"><p class="hinweis-klein">Lade die Chronik …</p></div>
+    </div>
+
+    <div class="lab-panel" id="lab-panel-mitmachen" role="tabpanel" aria-labelledby="lab-tab-mitmachen" hidden>
+      <section class="lab-block" aria-labelledby="lab-mitmachen-titel">
+        <h2 id="lab-mitmachen-titel">So gehst du mit</h2>
+        <ol class="zv-schritte">
+          <li><strong>Folge <a href="https://www.instagram.com/reisendegedanken/" target="_blank" rel="noopener">@reisendegedanken</a></strong> auf Instagram.</li>
+          <li><strong>Kommentiere unter dem neuesten Labyrinth-Video, als was du mitgehst:</strong> Ritterin, Späher, Ärztin, Bäcker, Magier … egal was.</li>
+          <li><strong>Schreib dazu die Richtung</strong> (links, rechts oder geradeaus) und stimm in der <strong>Instagram-Umfrage</strong> im Video ab. Beides zählt.</li>
+        </ol>
+        <p class="hinweis-klein">Wer kommentiert und dem Kanal folgt, ist am nächsten Tag Teil der Gruppe. Hier erscheinen nur dein Insta-Name und deine Rolle, nie der Kommentar selbst.</p>
+      </section>
+      <section class="lab-block lab-schluessel" aria-labelledby="lab-schluessel-titel">
+        <p class="etikett">Versteckspiel</p>
+        <h2 id="lab-schluessel-titel">🔑 Wo ist der goldene Schlüssel?</h2>
+        <p>In jedem Labyrinth-Video ist irgendwo ein <strong>goldener Schlüssel</strong> versteckt, nur ein, zwei Sekunden lang. Wer ihn zuerst findet und in die Kommentare schreibt, wo er war, wird im nächsten Video genannt.</p>
+        <ul class="lab-finder" id="lab-finder" hidden></ul>
+      </section>
+      <section class="lab-block" aria-labelledby="lab-regeln-titel">
+        <h2 id="lab-regeln-titel">Die Regeln</h2>
+        <ul class="lab-regeln">
+          <li><strong>Ein Tag, eine Richtung:</strong> Die Gruppe geht gemeinsam in die Richtung mit den meisten Stimmen (Umfrage und Kommentare zusammen), bis zur nächsten Abzweigung, Sackgasse oder Kammer.</li>
+          <li><strong>Nebel:</strong> Auf der Karte siehst du nur, wo wir schon waren. Wie groß das Labyrinth ist und wo der Ausgang liegt, weiß niemand.</li>
+          <li><strong>Kreaturen:</strong> Manche Gänge sind bewacht. Dann kämpft die Gruppe – wer kämpfen kann, steht vorne. Je mehr wir sind, desto stärker sind wir.</li>
+          <li><strong>Niemand stirbt:</strong> Verletzte werden getragen und bleiben in der Gruppe.</li>
+        </ul>
+      </section>
+    </div>
+
+    <aside class="supporter-leiste zv-patreon">
+      <span class="supporter-krone">♛</span>
+      <p><strong>Einblicke hinter die Kulissen?</strong> Das Labyrinth läuft über dasselbe Patreon wie das Insta-Dorf.</p>
+      <a class="knopf" href="https://www.patreon.com/ReisendeGedanken" target="_blank" rel="noopener" data-umami-event="Patreon" data-umami-event-ort="labyrinth-leiste">Zu Patreon</a>
     </aside>
   </main>
 </div>
@@ -433,7 +549,7 @@
 
 <script type="importmap">{ "imports": { "three": "./lib/three.module.min.js" } }</script>
 <script defer src="https://cloud.umami.is/script.js" data-website-id="80cb14ef-1eda-40cc-8519-9f694c1fff23" data-domains="instadorf.de"></script>
-<script src="app.js?v=3dcab031"></script>
+<script src="app.js?v=7ec9b64b"></script>
 
 </body>
 </html>

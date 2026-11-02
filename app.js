@@ -956,3 +956,134 @@
   var h = decodeURIComponent(location.hash.slice(1));
   if (/^br-/.test(h)) { tab = h.slice(3); an(); }
 })();
+
+/* Das Labyrinth (01.11.2026, replaces Battle Insta Royale): the third world. Data: daten/labyrinth.json + the map pictures
+   bilder_lab/karte_nah.webp (close-up, default) and karte.webp (the whole maze), written by InstaLabyrinth/Webseite/export.py and
+   Karte/karte_rendern.py - only what the group has walked or seen, names + roles as commented, never comment texts.
+   Tabs: Karte (picture + today's vote: links / rechts / geradeaus, Instagram poll AND comments count), Die Gruppe (table),
+   Chronik, Mitmachen (incl. the golden key). Does nothing while #labyrinth is not in the DOM. */
+(function () {
+  "use strict";
+  var lab = document.getElementById("labyrinth"); if (!lab) return;
+  var $ = function (id) { return document.getElementById(id); };
+  var w = $("welten"), zv = $("zombieville"), D = null, geladen = false, TABS = ["karte", "teilnehmer", "chronik", "mitmachen"], tab = "karte";
+  var filter = "alle", gezeigt = 200, ansicht = "nah";
+  var NAMEN = { links: "Links", geradeaus: "Geradeaus", rechts: "Rechts" }, PFEIL = { links: "⬅", geradeaus: "⬆", rechts: "➡" };
+  var STATUS = { dabei: "dabei", verletzt: "verletzt", ausgeschieden: "wird getragen" };
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function zaehlen(name, daten) { try { if (window.umami && window.umami.track) window.umami.track(name, daten || {}); } catch (e) { /* never break the page */ } }
+  var wahl = $("welt-labyrinth"); if (wahl) wahl.parentNode.classList.add("welten-drei");
+
+  // ---- world switching, hand in hand with the chooser code above (dorf / zombieville) without touching it
+  function an() {
+    lab.hidden = false;
+    if (zv) zv.hidden = true;
+    document.documentElement.classList.remove("welt-zv");
+    document.documentElement.classList.add("welt-lab");
+    ["welt-wechseln-dorf", "welt-wechseln-zombie"].forEach(function (id) { var b = $(id); if (b) { b.classList.remove("aktiv", "weltknopf-zv"); b.removeAttribute("aria-current"); } });
+    var b = $("welt-wechseln-labyrinth"); if (b) { b.classList.add("aktiv", "weltknopf-lab"); b.setAttribute("aria-current", "true"); }
+    document.title = "Das Labyrinth";
+    if (w) { w.hidden = true; document.documentElement.style.overflow = ""; }
+    if (!geladen) laden();
+    zeigeTab(tab, false);
+    window.scrollTo(0, 0);
+  }
+  function aus() {
+    lab.hidden = true;
+    document.documentElement.classList.remove("welt-lab");
+    var b = $("welt-wechseln-labyrinth"); if (b) { b.classList.remove("aktiv", "weltknopf-lab"); b.removeAttribute("aria-current"); }
+    if (/^#lab|^#labyrinth/.test(location.hash)) { try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { /* preview frame */ } }
+  }
+  ["welt-dorf", "welt-zombie", "welt-wechseln-dorf", "welt-wechseln-zombie"].forEach(function (id) { var b = $(id); if (b) b.addEventListener("click", aus); });
+  ["welt-labyrinth", "welt-wechseln-labyrinth"].forEach(function (id) { var b = $(id); if (b) b.addEventListener("click", function () { zaehlen("Welt", { welt: "Das Labyrinth" }); an(); }); });
+
+  function zeigeTab(name, merken) {
+    if (TABS.indexOf(name) < 0) name = "karte";
+    tab = name;
+    TABS.forEach(function (t) { var p = $("lab-panel-" + t), k = $("lab-tab-" + t); if (p) p.hidden = t !== name; if (k) k.setAttribute("aria-selected", t === name ? "true" : "false"); });
+    if (merken !== false) { try { history.replaceState(null, "", "#lab-" + name); } catch (e) { /* preview frame */ } }
+  }
+  lab.addEventListener("click", function (ev) {
+    var t = ev.target.closest("[data-labtab]"); if (t) { zaehlen("Labyrinth Reiter", { reiter: t.getAttribute("data-labtab") }); zeigeTab(t.getAttribute("data-labtab")); return; }
+    var a = ev.target.closest("[data-labansicht]"); if (a) { ansicht = a.getAttribute("data-labansicht"); zaehlen("Labyrinth Ansicht", { ansicht: ansicht }); karte(); return; }
+    var f = ev.target.closest("[data-labfilter]"); if (f) { filter = f.getAttribute("data-labfilter"); gezeigt = 200; tabelle(); return; }
+    if (ev.target.closest("#lab-mehr")) { gezeigt += 300; tabelle(); }
+  });
+
+  function laden() {
+    geladen = true;
+    fetch("daten/labyrinth.json", { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
+      D = d;
+      $("lab-tag").textContent = d.tag; $("lab-gesamt").textContent = d.gruppe.gesamt; $("lab-erkundet").textContent = d.karte.erkundet;
+      $("lab-status").textContent = d.status;
+      $("lab-beispiel").hidden = !d.beispiel;
+      karte(); heute(); tabelle(); chronik(); finder();
+    }).catch(function () { geladen = false; $("lab-status").textContent = "Die Daten konnten gerade nicht geladen werden. Lade die Seite bitte neu."; });
+  }
+
+  // ---- the map picture (close-up by default; the whole maze shows how much fog is left) + a version stamp against old caches
+  function karte() {
+    if (!D) return;
+    var src = (ansicht === "voll" ? D.karte.bild : D.karte.bild_nah) + "?t=" + D.tag;
+    $("lab-karte-bild").src = src; $("lab-karte-link").href = src;
+    lab.querySelectorAll("[data-labansicht]").forEach(function (b) { var an = b.getAttribute("data-labansicht") === ansicht; b.classList.toggle("aktiv", an); b.setAttribute("aria-pressed", an ? "true" : "false"); });
+  }
+
+  // ---- today's vote: three cards, wall / known dead end greyed out, poll + comments as numbers and a bar
+  function heute() {
+    if (D.finale) { $("lab-finale").hidden = false; $("lab-finale-text").textContent = D.finale; $("lab-heute").hidden = true; return; }
+    var A = D.abstimmung || { umfrage: {}, kommentare: {} }, sum = {}, max = 0;
+    ["links", "geradeaus", "rechts"].forEach(function (r) { sum[r] = (A.umfrage[r] || 0) + (A.kommentare[r] || 0); max = Math.max(max, sum[r]); });
+    $("lab-heute").hidden = false;
+    $("lab-heute-etikett").textContent = "Abstimmung für Tag " + (D.tag + 1);
+    var opts = (D.optionen || []).slice().sort(function (a, b) { return ["links", "geradeaus", "rechts"].indexOf(a.richtung) - ["links", "geradeaus", "rechts"].indexOf(b.richtung); });
+    $("lab-optionen").innerHTML = opts.map(function (o) {
+      var grund = o.frei ? "" : (o.bekannte_sackgasse ? "Da waren wir schon: Sackgasse" : "Hier ist eine Hecke");
+      return '<li class="lab-opt lab-opt-' + o.richtung + (o.frei ? "" : " lab-zu") + '"><span class="lab-opt-pfeil" aria-hidden="true">' + PFEIL[o.richtung] + "</span><strong>" + NAMEN[o.richtung] + "</strong>"
+        + (o.wind ? '<span class="lab-wind">Luftzug!</span>' : "")
+        + (o.frei ? '<span class="lab-stimmen">' + (A.umfrage[o.richtung] || 0) + " Umfrage · " + (A.kommentare[o.richtung] || 0) + ' Kommentare</span><span class="lab-balken"><i style="width:' + (max ? Math.round(100 * sum[o.richtung] / max) : 0) + '%"></i></span>'
+          : '<span class="lab-stimmen">' + grund + "</span>") + "</li>";
+    }).join("");
+    $("lab-abst-hinweis").innerHTML = "Stimm in der Instagram-Umfrage ab <strong>und</strong> schreib die Richtung in die Kommentare – beides zählt." + (A.stand ? " Stand der Stimmen: " + esc(A.stand) + "." : " Die Stimmen tragen wir von Hand nach.");
+  }
+
+  // ---- the group: name, role as commented, status, hits against creatures, joined on day
+  function tabelle() {
+    if (!D) return;
+    var T = D.teilnehmer || [], q = $("lab-suche").value.trim().toLowerCase().replace(/^@/, "");
+    var n = { alle: T.length, dabei: 0, verletzt: 0, ausgeschieden: 0 };
+    T.forEach(function (t) { n[t.status] = (n[t.status] || 0) + 1; });
+    $("lab-filter").innerHTML = [["alle", "Alle"], ["dabei", "Dabei"], ["verletzt", "Verletzt"], ["ausgeschieden", "Getragen"]].map(function (p) {
+      return '<button type="button" class="chip' + (filter === p[0] ? " aktiv" : "") + '" data-labfilter="' + p[0] + '">' + p[1] + " · " + (n[p[0]] || 0) + "</button>";
+    }).join("");
+    var liste = T.filter(function (t) { return (filter === "alle" || t.status === filter) && (!q || t.name.toLowerCase().indexOf(q) >= 0 || t.rolle.toLowerCase().indexOf(q) >= 0); });
+    liste.sort(function (a, b) { return b.treffer - a.treffer || (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1); });
+    $("lab-treffer").textContent = T.length ? liste.length + " in der Gruppe" + (liste.length !== T.length ? " (gefiltert)" : "") : "Noch niemand dabei. Wer unter Video 0 kommentiert, ist ab Tag 1 in der Gruppe.";
+    $("lab-tbody").innerHTML = liste.slice(0, gezeigt).map(function (t) {
+      return '<tr class="lab-' + esc(t.status) + '"><td><strong>' + esc(t.name) + "</strong>" + (t.patreon ? '<span class="marke sup' + (t.patreon >= 3 ? " sup3" : "") + '">Supporter</span>' : "") + "</td><td>" + esc(t.rolle) + "</td><td>"
+        + esc(STATUS[t.status] || t.status) + '</td><td class="lab-num">' + (t.treffer || 0) + '</td><td class="lab-num">Tag ' + t.einzug_tag + "</td></tr>";
+    }).join("");
+    $("lab-mehr").hidden = liste.length <= gezeigt;
+  }
+  $("lab-suche").addEventListener("input", function () { gezeigt = 200; tabelle(); });
+
+  // ---- chronicle: one block per posted day, newest first
+  function chronik() {
+    var C = (D.chronik || []).slice().reverse();
+    $("lab-chronik-liste").innerHTML = C.map(function (c) {
+      return '<section class="lab-block lab-tagblock"><p class="etikett">Tag ' + c.tag + (c.richtung ? " · " + esc(NAMEN[c.richtung] || c.richtung) : "") + (c.gesamt ? " · " + c.gesamt + " in der Gruppe" : "") + "</p><h2>" + esc(c.titel) + "</h2>"
+        + (c.absaetze || []).map(function (a) { return "<p>" + esc(a) + "</p>"; }).join("")
+        + (c.ereignisse && c.ereignisse.length ? "<ul class=\"lab-ereignisse\">" + c.ereignisse.map(function (e) { return '<li><span class="lab-zeit">' + esc(e.zeit) + "</span> " + esc(e.text) + "</li>"; }).join("") + "</ul>" : "")
+        + "</section>";
+    }).join("") || '<p class="hinweis-klein">Noch kein Tag.</p>';
+  }
+  function finder() {
+    var F = D.schluessel || [];
+    $("lab-finder").hidden = !F.length;
+    $("lab-finder").innerHTML = F.map(function (k) { return "<li>🔑 " + esc(k.video) + ": zuerst gefunden von <strong>" + esc(k.finder) + "</strong></li>"; }).join("");
+  }
+
+  // a direct link (#labyrinth, #lab-karte, #lab-teilnehmer ...) opens this world without the chooser
+  var h = decodeURIComponent(location.hash.slice(1));
+  if (h === "labyrinth") { an(); } else if (/^lab-/.test(h)) { tab = h.slice(4); an(); }
+})();
